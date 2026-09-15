@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRE Pirajussara</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#2563eb;--secondary:#64748b;--success:#10b981;--danger:#ef4444;--light:#f8fafc;--dark:#1e293b;--border:#e2e8f0}
+body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;color:var(--dark)}
+.container{max-width:1400px;margin:0 auto}
+.header{background:#fff;padding:2rem;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.header h1{color:var(--primary)}
+.header-actions{display:flex;gap:1rem}
+.tabs{display:flex;background:#fff;padding:0 2rem;border-bottom:2px solid var(--border);overflow-x:auto}
+.tab-btn{padding:1rem 1.5rem;border:none;background:none;cursor:pointer;font-weight:500;color:var(--secondary);border-bottom:3px solid transparent;white-space:nowrap}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
+.main-content{padding:2rem}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.card{background:#fff;border-radius:8px;padding:2rem;margin-bottom:1.5rem;box-shadow:0 10px 25px rgba(0,0,0,.1)}
+.card h2,.card h3{color:var(--primary);margin-bottom:1rem}
+.btn{padding:.75rem 1.5rem;border:none;border-radius:6px;font-weight:600;cursor:pointer;margin-right:.5rem}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:disabled{background:#93c5fd;cursor:not-allowed;opacity:.6}
+.btn-secondary{background:var(--secondary);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.form-group{margin-bottom:1.5rem}
+.form-group label{display:block;margin-bottom:.5rem;font-weight:600}
+.form-group input{width:100%;padding:.75rem;border:1px solid var(--border);border-radius:6px}
+.upload-area{border:2px dashed var(--primary);border-radius:8px;padding:3rem 2rem;text-align:center;background:rgba(37,99,235,.05);cursor:pointer;margin-bottom:1.5rem}
+.upload-area.dragover{background:rgba(37,99,235,.15)}
+.upload-area input{display:none}
+.upload-area p{color:var(--primary);font-weight:600}
+.status-message{margin-top:1rem;padding:1rem;border-radius:6px;display:none}
+.status-message.show{display:block}
+.status-message.success{background:rgba(16,185,129,.1);color:#047857;border-left:4px solid var(--success)}
+.status-message.error{background:rgba(239,68,68,.1);color:#991b1b;border-left:4px solid var(--danger)}
+.status-message.info{background:rgba(37,99,235,.1);color:#1e40af;border-left:4px solid var(--primary)}
+.dashboard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;margin-bottom:1.5rem}
+.kpi-card{background:linear-gradient(135deg,var(--primary),#1d4ed8);color:#fff;padding:1.5rem;border-radius:8px}
+.kpi-card h3{color:#fff;font-size:.9rem;opacity:.9}
+.pfb-card{background:linear-gradient(135deg,#1e3a8a,#1d4ed8 55%,#2563eb)}
+.pfb-card-header{display:flex;align-items:center;gap:.65rem;margin-bottom:.5rem}
+.pfb-card-header h3{margin:0}
+.pfb-icon{width:34px;height:34px;border-radius:50%;background:#fff;padding:3px;box-shadow:0 2px 8px rgba(0,0,0,.25);flex-shrink:0}
+.delivery-card{background:linear-gradient(135deg,#9a3412,#ea580c 55%,#f59e0b)}
+.delivery-icon{width:34px;height:34px;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.25);flex-shrink:0}
+.kpi-value{font-size:1.8rem;font-weight:700;margin:.5rem 0}
+.data-table{width:100%;border-collapse:collapse;font-size:.9rem}
+.data-table th{background:var(--light);padding:1rem;text-align:left;border-bottom:2px solid var(--border)}
+.data-table td{padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+.info-text{background:rgba(37,99,235,.1);padding:1rem;border-radius:6px;margin-bottom:1.5rem;color:var(--primary);border-left:4px solid var(--primary)}
+.filter-group input{width:100%;padding:.75rem;border:1px solid var(--border);border-radius:6px}
+.footer{background:var(--dark);color:#fff;text-align:center;padding:2rem;margin-top:2rem}
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000}
+.confirm-box{background:#fff;border-radius:8px;padding:2rem;max-width:400px;width:90%;box-shadow:0 10px 25px rgba(0,0,0,.2)}
+.confirm-box p{margin-bottom:1.5rem;color:var(--dark);line-height:1.5}
+.confirm-actions{display:flex;justify-content:flex-end;gap:.75rem}
+.period-selector{display:flex;flex-wrap:wrap;gap:.5rem}
+.period-chip{display:flex;align-items:center;gap:.4rem;padding:.5rem .9rem;border:1px solid var(--border);border-radius:20px;cursor:pointer;font-size:.85rem;user-select:none;background:#fff}
+.period-chip:has(input:checked){background:var(--primary);color:#fff;border-color:var(--primary)}
+.period-chip input{cursor:pointer}
+
+/* ============ ANALYTICS BI (estilos novos e isolados, prefixo .abi-) ============ */
+.abi-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.abi-kicker{font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--primary);margin-bottom:.2rem}
+.abi-title{color:var(--dark);font-size:1.35rem;margin:0}
+.abi-chips{display:flex;gap:.4rem;flex-wrap:wrap}
+.abi-chip{font-size:.8rem;font-weight:700;padding:.45rem .9rem;border-radius:999px;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--secondary);transition:all .15s}
+.abi-chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.abi-kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
+.abi-kpi{background:#fff;border-radius:14px;padding:1.1rem 1.25rem;box-shadow:0 6px 18px rgba(15,23,42,.08);border-top:3px solid var(--primary)}
+.abi-kpi-label{font-size:.68rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8;margin-bottom:.45rem}
+.abi-kpi-value{font-size:1.5rem;font-weight:700;color:var(--dark);line-height:1.1;margin-bottom:.45rem}
+.abi-kpi-sub{display:flex;align-items:center;gap:.5rem;font-size:.72rem;color:#94a3b8}
+.abi-grid-21{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:1rem;margin-bottom:1.5rem}
+.abi-grid-11{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem;margin-bottom:1.5rem}
+@media (max-width:900px){.abi-grid-21,.abi-grid-11{grid-template-columns:1fr}}
+.abi-panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:.75rem;margin-bottom:.75rem;flex-wrap:wrap}
+.abi-panel-head h3{margin:0;color:var(--dark)}
+.abi-hint{font-size:.7rem;color:#94a3b8}
+.abi-chart-wrap{position:relative;height:330px}
+.abi-donut-wrap{position:relative;height:215px}
+.abi-donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;text-align:center}
+.abi-donut-center .lbl{font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8}
+.abi-donut-center .val{font-size:1.15rem;font-weight:700;color:var(--dark)}
+.abi-legend{display:flex;flex-direction:column;gap:.35rem;margin-top:.6rem}
+.abi-legend-item{display:flex;align-items:center;gap:.5rem;font-size:.78rem}
+.abi-legend-item .sw{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.abi-legend-item .nm{color:var(--dark);font-weight:600;flex:1}
+.abi-legend-item .vl{color:#475569;white-space:nowrap}
+.abi-legend-item .pc{color:#94a3b8;width:48px;text-align:right}
+.abi-insight{border-radius:12px;padding:.7rem .85rem;display:flex;gap:.6rem;margin-bottom:.55rem}
+.abi-insight .dot{width:9px;height:9px;border-radius:999px;margin-top:5px;flex-shrink:0}
+.abi-insight .tt{font-weight:700;font-size:.8rem;color:var(--dark);margin-bottom:.1rem}
+.abi-insight .tx{font-size:.76rem;color:#475569;line-height:1.45}
+.abi-heat-table{border-collapse:separate;border-spacing:4px;width:100%}
+.abi-heat-table th{font-size:.7rem;color:#94a3b8;font-weight:600;padding:2px 4px}
+.abi-heat-table th.sel{color:var(--primary);font-weight:800}
+.abi-heat-table td.unit{font-size:.76rem;color:var(--dark);font-weight:600;padding:2px 6px;white-space:nowrap}
+.abi-heat-table td.cell{border-radius:8px;text-align:center;font-size:.74rem;font-weight:700;padding:9px 2px;min-width:52px}
+.abi-heat-table td.cell.sel{outline:2px solid var(--primary);outline-offset:-2px}
+.abi-heat-scale{display:flex;align-items:center;gap:.5rem;margin-top:.6rem;font-size:.66rem;color:#94a3b8}
+.abi-heat-bar{flex:1;height:8px;border-radius:999px;background:linear-gradient(90deg,#DBEAFE,#059669)}
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="header">
+    <div><h1>📊 DRE Pirajussara</h1><p>Gestão Financeira - 📋 Painel de Aferição de indicadores</p></div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" onclick="exportPDF()">📥 Exportar</button>
+      <button class="btn btn-danger" onclick="clearAllData()">🗑️ Limpar Tudo</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="import" onclick="switchTab('import')">📁 Importar</button>
+    <button class="tab-btn" data-tab="arquivos" onclick="switchTab('arquivos')">🗂️ Arquivos</button>
+    <button class="tab-btn" data-tab="dashboard" onclick="switchTab('dashboard')">📈 Dashboard</button>
+    <button class="tab-btn" data-tab="dre" onclick="switchTab('dre')">💼 DRE</button>
+    <button class="tab-btn" data-tab="comparativo" onclick="switchTab('comparativo')">📊 MoM/YTD</button>
+    <button class="tab-btn" data-tab="kpis" onclick="switchTab('kpis')">🎯 KPIs</button>
+    <button class="tab-btn" data-tab="dados" onclick="switchTab('dados')">📋 Dados Brutos</button>
+    <button class="tab-btn" data-tab="analyticsbi" onclick="switchTab('analyticsbi');updateAnalyticsBI()">📊 Analytics BI</button>
+  </nav>
+
+  <main class="main-content">
+
+    <section id="import" class="tab-content active">
+      <div class="card">
+        <h2>📁 Importar Dados</h2>
+        <p class="info-text">✅ Suporta: .xlsx | .csv | .tsv &nbsp; | &nbsp; Colunas: Un. Neg. | Mês | Apelido Un. Neg. | Lançamento | Valor</p>
+        <div class="upload-area" id="uploadArea">
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.tsv">
+          <p>Clique ou arraste o arquivo aqui</p>
+          <small>Formato: .xlsx, .csv ou .tsv</small>
+        </div>
+        <button class="btn btn-primary" id="importBtn" onclick="importData()" disabled>▶️ Importar e Gerar</button>
+        <button class="btn btn-secondary" onclick="resetForm()">🔄 Limpar Formulário</button>
+
+        <div class="form-group" style="margin-top:1.5rem">
+          <label>Período (selecione 1 ou mais meses para consolidar nos relatórios):</label>
+          <div id="periodSelector" class="period-selector">
+            <small style="color:var(--secondary)">Nenhum mês importado ainda</small>
+          </div>
+        </div>
+
+        <div id="importStatus" class="status-message"></div>
+      </div>
+      <div class="card">
+        <h3>📖 Instruções</h3>
+        <ul style="line-height:1.8;padding-left:1.5rem">
+          <li><strong>Un. Neg.:</strong> código da unidade — 01, 02, 03, 04, 05, ESC, DIRET</li>
+          <li><strong>Mês:</strong> jan-26, fev-26, mar-26... (maiúscula ou minúscula, ambas aceitas)</li>
+          <li><strong>Apelido Un. Neg.:</strong> nome descritivo da unidade (opcional, ex: "01 MERCADO FARMACEUTICO")</li>
+          <li><strong>Lançamento:</strong> nome exato da conta contábil</li>
+          <li><strong>Valor:</strong> número no padrão BR — ex: 556.403,37 (ponto = milhar, vírgula = decimal)</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="arquivos" class="tab-content">
+      <div class="card">
+        <h2>🗂️ Arquivos Processados</h2>
+        <p class="info-text">Cada arquivo importado fica listado aqui. Os dados de todos os arquivos ficam acumulados — use o seletor de <strong>Período</strong> na aba Importar para escolher quais meses consolidar nos relatórios.</p>
+        <table class="data-table">
+          <thead><tr><th>Arquivo</th><th>Mês(es)</th><th>Linhas importadas</th><th>Linhas não importadas</th><th>Importado em</th></tr></thead>
+          <tbody id="filesTable"><tr><td colspan="5">Nenhum arquivo importado ainda</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>⚠️ Linhas não importadas</h3>
+        <p class="info-text">Linhas do arquivo que não entraram nos relatórios, com o motivo — geralmente Un. Neg., Mês ou Lançamento vazios, mês fora do formato (ex: jan-26) ou unidade não reconhecida.</p>
+        <table class="data-table small">
+          <thead><tr><th>Arquivo</th><th>Linha</th><th>Un. Neg.</th><th>Mês</th><th>Lançamento</th><th>Valor</th><th>Motivo</th></tr></thead>
+          <tbody id="rejectedRowsTable"><tr><td colspan="7">Nenhuma linha rejeitada</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="dashboard" class="tab-content">
+      <div class="dashboard-grid">
+        <div class="kpi-card"><h3>Faturamento Total</h3><p class="kpi-value" id="totalRevenue">R$‌ 0,00</p><p id="revenueVar">-</p></div>
+        <div class="kpi-card"><h3>Ticket Médio</h3><p class="kpi-value" id="avgTicket">R$‌ 0,00</p></div>
+        <div class="kpi-card"><h3>Margem Bruta</h3><p class="kpi-value" id="grossMargin">0%</p></div>
+        <div class="kpi-card"><h3>Unidades Vendidas</h3><p class="kpi-value" id="unitsSold">0</p><p id="unitsVar">-</p></div>
+      </div>
+      <div class="card">
+        <h3>🏪 Performance por Unidade</h3>
+        <table class="data-table"><thead><tr><th>Unidade</th><th>Faturamento</th><th>Ticket Médio</th><th>Margem</th></tr></thead>
+        <tbody id="unitPerformanceTable"><tr><td colspan="4">Nenhum dado importado</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <section id="dre" class="tab-content">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem">
+          <h2>💼 DRE Consolidado</h2>
+          <button class="btn btn-secondary" onclick="printDRE()">🖨️ Imprimir DRE</button>
+        </div>
+        <p id="drePeriodLabel" style="color:var(--secondary);margin-bottom:1rem"></p>
+        <div class="form-group" style="max-width:340px">
+          <label>Visualizar:</label>
+          <select id="dreUnitFilter" onchange="updateDRE()">
+            <option value="ALL">Consolidado (todas as unidades)</option>
+          </select>
+        </div>
+        <table class="data-table"><thead><tr><th>Cód.</th><th>Linha</th><th>Valor</th><th>% s/ Faturamento</th><th>Variação</th></tr></thead>
+        <tbody id="dreBody"><tr><td colspan="5">Nenhum dado importado</td></tr></tbody></table>
+        <p class="info-text" style="margin-top:1rem">📈 <strong>Variação</strong>: compara o mês mais recente do período selecionado com a <strong>média</strong> dos demais meses selecionados (análise horizontal). Selecione 2 ou mais meses no seletor de Período (aba Importar) para habilitar. Verde ▲ = favorável ao negócio, vermelho ▼ = desfavorável — em despesas, um aumento aparece em vermelho mesmo tendo crescido numericamente, porque mais despesa é ruim.</p>
+      </div>
+    </section>
+
+    <section id="comparativo" class="tab-content">
+      <div class="card">
+        <h2>📊 MoM - Mês vs Mês Anterior</h2>
+        <table class="data-table"><thead><tr><th>Métrica</th><th>Atual</th><th>Anterior</th><th>Var %</th><th>Status</th></tr></thead>
+        <tbody id="momBody"><tr><td colspan="5">Sem dados</td></tr></tbody></table>
+      </div>
+      <div class="card">
+        <h2>📉 YTD - Acumulado 📈</h2>
+        <div class="form-group" style="max-width:280px">
+          <label>Mês de referência:</label>
+          <select id="ytdMonthSelect" onchange="updateComparativo()"></select>
+        </div>
+        <table class="data-table"><thead><tr><th>Métrica</th><th>Mês Selecionado</th><th>Média Meses Anteriores</th><th>Variação</th><th>Status</th></tr></thead>
+        <tbody id="ytdBody"><tr><td colspan="5">Sem dados</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <section id="kpis" class="tab-content">
+      <div class="dashboard-grid">
+        <div class="kpi-card"><h3>Produtividade/Colaborador</h3><p class="kpi-value" id="productivity">R$‌ 0,00</p></div>
+        <div class="kpi-card"><h3>Custo de Pessoal</h3><p class="kpi-value" id="laborCost">0%</p></div>
+        <div class="kpi-card"><h3>Clientes Ativos</h3><p class="kpi-value" id="activeCustomers">0</p></div>
+        <div class="kpi-card"><h3>Área de Vendas</h3><p class="kpi-value" id="salesArea">0 m²</p></div>
+        <div class="kpi-card pfb-card">
+          <div class="pfb-card-header">
+            <img src="data:image/png;base64,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" alt="Farmácia Popular do Brasil" class="pfb-icon">
+            <h3>Participação PFB</h3>
+          </div>
+          <p class="kpi-value" id="pfbShare">0%</p>
+          <small id="pfbShareValue" style="opacity:.85"></small>
+        </div>
+        <div class="kpi-card delivery-card">
+          <div class="pfb-card-header">
+            <svg class="delivery-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="32" cy="32" r="32" fill="#fff7ed"/>
+              <path d="M4 24h7M2 32h8M4 40h7" stroke="#fdba74" stroke-width="3" stroke-linecap="round"/>
+              <polygon points="34,12 52,21 52,43 34,52 16,43 16,21" fill="#f59e0b"/>
+              <polygon points="34,12 52,21 34,30 16,21" fill="#fcd34d"/>
+              <polygon points="34,30 52,21 52,43 34,52" fill="#d97706"/>
+              <polygon points="34,30 16,21 16,43 34,52" fill="#ea580c"/>
+              <line x1="34" y1="12" x2="34" y2="52" stroke="#7c2d12" stroke-width="1.5"/>
+              <line x1="16" y1="21" x2="34" y2="30" stroke="#7c2d12" stroke-width="1"/>
+              <line x1="52" y1="21" x2="34" y2="30" stroke="#7c2d12" stroke-width="1"/>
+            </svg>
+            <h3>Participação Delivery</h3>
+          </div>
+          <p class="kpi-value" id="deliveryShare">0%</p>
+          <small id="deliveryShareValue" style="opacity:.85"></small>
+        </div>
+        <div class="kpi-card">
+          <h3>💊 G+S (Genéricos + Similares)</h3>
+          <p class="kpi-value" id="gsShare">0%</p>
+          <small id="gsValue" style="opacity:.9"></small><br>
+          <small id="gsVariacao"></small>
+        </div>
+      </div>
+      <div class="card">
+        <h3>💊 Mix de Produtos</h3>
+        <table class="data-table"><thead><tr><th>Categoria</th><th>Faturamento</th><th>% Total</th></tr></thead>
+        <tbody id="productCategoryTable"><tr><td colspan="3">Sem dados</td></tr></tbody></table>
+      </div>
+      <div class="card">
+        <h3>🏪 Análise por Unidade</h3>
+        <table class="data-table"><thead><tr><th>Unidade</th><th>Ticket</th><th>Margem</th><th>Produtividade</th><th>Custo Pessoal</th></tr></thead>
+        <tbody id="unitAnalysisTable"><tr><td colspan="5">Sem dados</td></tr></tbody></table>
+      </div>
+      <div class="card">
+        <h3 style="display:flex;align-items:center;gap:.5rem"><img src="data:image/png;base64,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" alt="PFB" style="width:24px;height:24px;border-radius:50%"> Farmácia Popular do Brasil (PFB) por mês</h3>
+        <p class="info-text">Participação = Vendas PFB informadas / Vendas realizadas durante o período (R$) do mesmo mês. Você pode informar ou corrigir o valor de qualquer mês pelo botão ✏️.</p>
+        <table class="data-table"><thead><tr><th>Mês</th><th>Vendas PFB Informadas</th><th>Vendas Realizadas do Mês</th><th>Participação</th><th></th></tr></thead>
+        <tbody id="pfbTable"><tr><td colspan="5">Nenhum mês importado ainda</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <section id="dados" class="tab-content">
+      <div class="card">
+        <h2>📋 Dados Brutos</h2>
+        <div class="filter-group"><input type="text" id="filterInput" placeholder="🔍 Filtrar..." onkeyup="filterData()"></div>
+        <table class="data-table"><thead><tr><th>Unidade</th><th>Apelido</th><th>Mês</th><th>Lançamento</th><th>Valor</th></tr></thead>
+        <tbody id="rawDataBody"><tr><td colspan="5">Nenhum dado importado</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <!-- ============ ANALYTICS BI (aba nova e isolada — não altera nada do restante) ============ -->
+    <section id="analyticsbi" class="tab-content">
+      <div class="card abi-header-card">
+        <div class="abi-header">
+          <div>
+            <div class="abi-kicker">DRE Analytics · Painel Executivo</div>
+            <h2 class="abi-title">Visão Consolidada</h2>
+          </div>
+          <div id="abiMonthChips" class="abi-chips"></div>
+        </div>
+      </div>
+
+      <div id="abiEmpty" class="card" style="display:none">
+        <p class="info-text">📊 Importe pelo menos um mês de dados na aba <strong>Importar</strong> para habilitar o Analytics BI.</p>
+      </div>
+
+      <div id="abiContent">
+        <div id="abiKpiRow" class="abi-kpi-row"></div>
+
+        <div class="abi-grid-21">
+          <div class="card">
+            <div class="abi-panel-head"><h3>💧 Do Faturamento ao Resultado</h3><span class="abi-hint" id="abiWaterfallHint"></span></div>
+            <div class="abi-chart-wrap"><canvas id="abiWaterfall"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="abi-panel-head"><h3>💡 Insights do período</h3><span class="abi-hint">gerados dos dados</span></div>
+            <div id="abiInsights"></div>
+          </div>
+        </div>
+
+        <div class="abi-grid-11">
+          <div class="card">
+            <div class="abi-panel-head"><h3>🍩 Despesas gerenciáveis</h3><span class="abi-hint">sem CMV · foco no que a gestão controla</span></div>
+            <div class="abi-donut-wrap"><canvas id="abiDonut1"></canvas><div class="abi-donut-center" id="abiDonut1Center"></div></div>
+            <div id="abiLegend1" class="abi-legend"></div>
+          </div>
+          <div class="card">
+            <div class="abi-panel-head"><h3>🔎 Funcionamento e apoio (detalhe)</h3><span class="abi-hint">drill-down das contas do dia a dia</span></div>
+            <div class="abi-donut-wrap"><canvas id="abiDonut2"></canvas><div class="abi-donut-center" id="abiDonut2Center"></div></div>
+            <div id="abiLegend2" class="abi-legend"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="abi-panel-head"><h3>🌡️ Margem bruta por unidade</h3><span class="abi-hint">% · todos os meses importados</span></div>
+          <div id="abiHeatmap" style="overflow-x:auto"></div>
+          <div class="abi-heat-scale"><span>menor</span><div class="abi-heat-bar"></div><span>maior margem</span></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+  <footer class="footer">
+    <p>DRE Alpha_WQA v.02 © 2026</p>
+    <p><small>Desenvolvimento e Direitos de Programação: Welton Q. Alcântara</small></p>
+  </footer>
+</div>
+
+<!-- MODAL DE CONFIRMAÇÃO (substitui window.confirm, que pode ser bloqueado em iframes/preview) -->
+<div id="confirmModalOverlay" class="confirm-overlay" style="display:none">
+  <div class="confirm-box">
+    <p id="confirmModalMessage"></p>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" onclick="hideConfirmModal(false)">Cancelar</button>
+      <button class="btn btn-danger" onclick="hideConfirmModal(true)">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE DIGITAÇÃO (substitui window.prompt) -->
+<div id="promptModalOverlay" class="confirm-overlay" style="display:none">
+  <div class="confirm-box">
+    <p id="promptModalMessage"></p>
+    <input type="text" id="promptModalInput" placeholder="Ex: 150.000,00" style="width:100%;padding:.75rem;border:1px solid var(--border);border-radius:6px;font-size:1rem;margin-bottom:1.5rem" onkeydown="if(event.key==='Enter') hidePromptModal(true)">
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" onclick="hidePromptModal(false)">Cancelar</button>
+      <button class="btn btn-primary" onclick="hidePromptModal(true)">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ MODAL DE CONFIRMAÇÃO ============
+let _confirmCallback = null;
+let _cancelCallback = null;
+function showConfirmModal(message, onConfirm, onCancel) {
+  _confirmCallback = onConfirm;
+  _cancelCallback = onCancel || null;
+  document.getElementById('confirmModalMessage').textContent = message;
+  document.getElementById('confirmModalOverlay').style.display = 'flex';
+}
+function hideConfirmModal(confirmed) {
+  document.getElementById('confirmModalOverlay').style.display = 'none';
+  const cb = _confirmCallback, cancelCb = _cancelCallback;
+  _confirmCallback = null; _cancelCallback = null;
+  if (confirmed && cb) cb();
+  else if (!confirmed && cancelCb) cancelCb();
+}
+
+// ============ MODAL DE DIGITAÇÃO (substitui window.prompt) ============
+let _promptCallback = null;
+function showPromptModal(message, defaultValue, onConfirm) {
+  _promptCallback = onConfirm;
+  document.getElementById('promptModalMessage').textContent = message;
+  const input = document.getElementById('promptModalInput');
+  input.value = defaultValue || '';
+  document.getElementById('promptModalOverlay').style.display = 'flex';
+  setTimeout(() => { input.focus(); input.select(); }, 50);
+}
+function hidePromptModal(confirmed) {
+  document.getElementById('promptModalOverlay').style.display = 'none';
+  const cb = _promptCallback;
+  const value = document.getElementById('promptModalInput').value;
+  _promptCallback = null;
+  if (confirmed && cb) cb(value);
+}
+
+// ============ ESTADO ============
+let appData = { rawData: [], processedData: {}, months: [], columnMapping: {}, importedFiles: [], rejectedRows: [], pfbByMonth: {} };
+let pendingFile = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const stored = localStorage.getItem('dreData');
+  if (stored) { try { appData = JSON.parse(stored); } catch(e){} }
+
+  const uploadArea = document.getElementById('uploadArea');
+  const fileInput = document.getElementById('fileInput');
+
+  uploadArea.addEventListener('click', () => fileInput.click());
+  uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+  uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+  uploadArea.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; onFileSelected(e.dataTransfer.files[0]); }
+  });
+  fileInput.addEventListener('change', e => { if (e.target.files.length) onFileSelected(e.target.files[0]); });
+
+  updateAllReports();
+});
+
+// ============ SELEÇÃO E LEITURA DO ARQUIVO ============
+function onFileSelected(file) {
+  const name = file.name.toLowerCase();
+  const btn = document.getElementById('importBtn');
+  btn.disabled = true;
+
+  if (!name.endsWith('.xlsx') && !name.endsWith('.xls') && !name.endsWith('.csv') && !name.endsWith('.tsv')) {
+    showStatus('❌ Formato não suportado. Use .xlsx, .csv ou .tsv', 'error');
+    return;
+  }
+
+  showStatus('⏳ Lendo arquivo "' + file.name + '"...', 'info');
+
+  if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+    if (typeof XLSX === 'undefined') {
+      showStatus('❌ Biblioteca XLSX não carregou. Verifique sua conexão com a internet e recarregue a página.', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        onDataParsed(json, file.name);
+      } catch (err) {
+        showStatus('❌ Erro ao ler XLSX: ' + err.message, 'error');
+      }
+    };
+    reader.onerror = () => showStatus('❌ Erro ao ler o arquivo', 'error');
+    reader.readAsArrayBuffer(file);
+  } else {
+    // CSV ou TSV - parser nativo
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const text = e.target.result;
+        const json = parseDelimitedText(text);
+        onDataParsed(json, file.name);
+      } catch (err) {
+        showStatus('❌ Erro ao ler arquivo texto: ' + err.message, 'error');
+      }
+    };
+    reader.onerror = () => showStatus('❌ Erro ao ler o arquivo', 'error');
+    reader.readAsText(file, 'UTF-8');
+  }
+}
+
+function parseDelimitedText(text) {
+  const lines = text.replace(/\r/g, '').split('\n').filter(l => l.trim().length > 0);
+  if (lines.length === 0) return [];
+  // Detecta delimitador pela primeira linha
+  const firstLine = lines[0];
+  let delim = ',';
+  if (firstLine.split('\t').length > firstLine.split(',').length) delim = '\t';
+  else if (firstLine.split(';').length > firstLine.split(',').length) delim = ';';
+
+  const headers = firstLine.split(delim).map(h => h.trim());
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(delim);
+    const obj = {};
+    headers.forEach((h, idx) => obj[h] = (values[idx] || '').trim());
+    rows.push(obj);
+  }
+  return rows;
+}
+
+function onDataParsed(json, fileName) {
+  if (!json || json.length === 0) {
+    showStatus('⚠️ Arquivo vazio ou sem linhas de dados', 'error');
+    return;
+  }
+  try {
+    const headers = Object.keys(json[0]);
+    normalizeColumnNames(headers);
+    appData.rawData = json;
+    pendingFile = fileName;
+    document.getElementById('importBtn').disabled = false;
+    showStatus('✅ "' + fileName + '" carregado: ' + json.length + ' linhas prontas. Clique em "Importar e Gerar".', 'success');
+  } catch (err) {
+    showStatus('❌ ' + err.message, 'error');
+    document.getElementById('importBtn').disabled = true;
+  }
+}
+
+// ============ NORMALIZAÇÃO DE COLUNAS ============
+function normalizeColumnNames(headers) {
+  const map = {};
+  // IMPORTANTE: aliasV é checado ANTES de unitV, porque "Apelido Un. Neg."
+  // contém a substring "un. neg." e seria incorretamente detectado como a
+  // coluna de unidade, sobrescrevendo o mapeamento correto de "Un. Neg.".
+  const aliasV = ['apelido un. neg.', 'apelido un.neg.', 'apelido', 'nome unidade'];
+  const monthV = ['mes', 'month', 'periodo'];
+  const unitV = ['un. neg.', 'un.neg.', 'unidade', 'unit', 'filial', 'loja'];
+  const accV = ['lancamento', 'conta', 'account', 'description'];
+  const valV = ['valor', 'value', 'amount'];
+
+  headers.forEach(h => {
+    // Normaliza removendo acentos, para tolerar erros de digitação/exportação
+    // como "mès" (acento grave) em vez de "mês" (circunflexo) — ambos viram "mes".
+    const lh = normalizeAccents(h);
+    // Cada coluna só é atribuída uma vez (!map.campo), e a checagem de
+    // "alias" vem primeiro para não ser roubada pela checagem de "unit".
+    if (!map.alias && aliasV.some(v => lh.includes(normalizeAccents(v)))) map.alias = h;
+    else if (!map.month && monthV.some(v => lh.includes(v))) map.month = h;
+    else if (!map.unit && unitV.some(v => lh.includes(normalizeAccents(v)))) map.unit = h;
+    else if (!map.account && accV.some(v => lh.includes(v))) map.account = h;
+    else if (!map.value && valV.some(v => lh.includes(v))) map.value = h;
+  });
+
+  if (!map.month || !map.unit || !map.account || !map.value) {
+    const faltando = [];
+    if (!map.unit) faltando.push('Un. Neg.');
+    if (!map.month) faltando.push('Mês');
+    if (!map.account) faltando.push('Lançamento');
+    if (!map.value) faltando.push('Valor');
+    throw new Error('Colunas obrigatórias não encontradas: ' + faltando.join(', ') + '. Cabeçalhos do arquivo: ' + headers.join(' | '));
+  }
+  appData.columnMapping = map;
+}
+
+// Remove acentos/diacríticos e deixa minúsculo, para comparações tolerantes
+// a erros de digitação/exportação (ex: "mès" vs "mês" vs "mes").
+function normalizeAccents(str) {
+  return String(str).toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+// Ordena meses no formato "jan-26" CRONOLOGICAMENTE (não alfabeticamente —
+// alfabeticamente "fev-26" viria antes de "jan-26", o que está errado).
+const MONTH_ORDER = { jan:1, fev:2, mar:3, abr:4, mai:5, jun:6, jul:7, ago:8, set:9, out:10, nov:11, dez:12 };
+function compareMonths(a, b) {
+  const [ma, ya] = String(a).toLowerCase().split('-');
+  const [mb, yb] = String(b).toLowerCase().split('-');
+  const yaN = parseInt(ya, 10) || 0, ybN = parseInt(yb, 10) || 0;
+  if (yaN !== ybN) return yaN - ybN;
+  return (MONTH_ORDER[ma] || 0) - (MONTH_ORDER[mb] || 0);
+}
+
+// ============ CONVERSÃO DE NÚMEROS NO PADRÃO BR ============
+// Converte "556.403,37" (formato BR: ponto = milhar, vírgula = decimal) em 556403.37
+function parseValorBR(raw) {
+  if (raw === null || raw === undefined || raw === '') return 0;
+  if (typeof raw === 'number') return raw; // já veio numérico do XLSX
+  let s = String(raw).trim();
+  if (s === '') return 0;
+  s = s.replace(/[Rr]\$\s?/g, '').trim();
+  const hasComma = s.includes(',');
+  const hasDot = s.includes('.');
+  if (hasComma && hasDot) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (hasComma && !hasDot) {
+    s = s.replace(',', '.');
+  }
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+function validateMonthFormat(m) {
+  if (!m) return false;
+  return /^(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)-\d{2}$/i.test(String(m).trim());
+}
+function validateUnit(u) {
+  const valid = ['01','02','03','04','05','ESC','DIRET','1','2','3','4','5'];
+  return valid.includes(String(u).toUpperCase().trim());
+}
+function normalizeUnit(u) {
+  let n = String(u).toUpperCase().trim();
+  if (n.length === 1 && !isNaN(n)) n = '0' + n;
+  return n;
+}
+
+// ============ IMPORTAÇÃO ============
+function importData() {
+  if (!appData.rawData.length) { showStatus('❌ Nenhum arquivo carregado', 'error'); return; }
+  try {
+    processRawData();
+    localStorage.setItem('dreData', JSON.stringify(appData));
+    updateAllReports();
+    const fileRecord = appData.importedFiles.find(f => f.name === pendingFile);
+    const invalidCount = fileRecord ? (fileRecord.invalidRows || 0) : 0;
+    if (invalidCount > 0) {
+      showStatus(`✅ Dados importados com sucesso! ⚠️ ${invalidCount} linha(s) não foram importadas — veja a aba 🗂️ Arquivos.`, 'info');
+    } else {
+      showStatus('✅ Dados importados com sucesso!', 'success');
+    }
+    switchTab('dashboard');
+    // Pergunta, mês a mês, se o usuário quer informar as vendas do PFB
+    // (Farmácia Popular do Brasil) para os meses trazidos nesta importação.
+    askPFBForMonths(appData.lastImportedMonths || []);
+  } catch (err) {
+    showStatus('❌ Erro ao processar: ' + err.message, 'error');
+  }
+}
+
+// Pergunta em sequência (um mês por vez) se o usuário quer informar/corrigir
+// as vendas do PFB daquele mês. Segue para o próximo mês tanto se o usuário
+// confirmar e salvar quanto se recusar — nenhum mês fica pulado da fila.
+function askPFBForMonths(months) {
+  if (!months || !months.length) return;
+  const [month, ...rest] = months;
+  showConfirmModal(
+    `Deseja informar as vendas do PFB (Farmácia Popular do Brasil) para ${month}?`,
+    () => {
+      const existing = appData.pfbByMonth[month];
+      const defaultValue = existing !== undefined ? String(existing).replace('.', ',') : '';
+      showPromptModal(`Vendas PFB de ${month} (R$):`, defaultValue, (value) => {
+        const parsed = parseValorBR(value);
+        appData.pfbByMonth[month] = parsed;
+        localStorage.setItem('dreData', JSON.stringify(appData));
+        updateKPIs();
+        showStatus(`✅ Vendas PFB de ${month} registradas: ${fmtCur(parsed)}`, 'success');
+        askPFBForMonths(rest);
+      });
+    },
+    () => askPFBForMonths(rest)
+  );
+}
+
+function processRawData() {
+  const map = appData.columnMapping;
+  let valid = 0, invalid = 0;
+  const monthsInThisFile = new Set();
+  const rejectedRows = [];
+
+  // Descobre quais meses este arquivo contém, para SUBSTITUIR (não duplicar)
+  // dados de um mês que já tenha sido importado antes.
+  appData.rawData.forEach(row => {
+    const month = row[map.month];
+    if (month && validateMonthFormat(month)) monthsInThisFile.add(String(month).toLowerCase().trim());
+  });
+  Object.keys(appData.processedData).forEach(key => {
+    if (monthsInThisFile.has(appData.processedData[key].month)) delete appData.processedData[key];
+  });
+
+  appData.rawData.forEach((row, idx) => {
+    const unit = row[map.unit], month = row[map.month], account = row[map.account];
+    const alias = map.alias ? row[map.alias] : '';
+    const rawValue = row[map.value];
+    const value = parseValorBR(rawValue);
+
+    let reason = null;
+    if (!unit) reason = 'Un. Neg. vazio';
+    else if (!month) reason = 'Mês vazio';
+    else if (!account) reason = 'Lançamento vazio';
+    else if (!validateMonthFormat(month)) reason = `Mês em formato inválido: "${month}" (esperado, ex: jan-26)`;
+    else if (!validateUnit(unit)) reason = `Unidade não reconhecida: "${unit}" (válidas: 01, 02, 03, 04, 05, ESC, DIRET)`;
+
+    if (reason) {
+      invalid++;
+      rejectedRows.push({
+        file: pendingFile || '-',
+        row: idx + 2, // +2 = considerando o cabeçalho na linha 1 da planilha
+        unit: unit || '-', month: month || '-', account: account || '-',
+        value: (rawValue === undefined || rawValue === '') ? '-' : String(rawValue),
+        reason
+      });
+      return;
+    }
+
+    const nUnit = normalizeUnit(unit);
+    const nMonth = String(month).toLowerCase().trim();
+
+    const key = nUnit + '_' + nMonth;
+    if (!appData.processedData[key]) appData.processedData[key] = { unit: nUnit, month: nMonth, alias: alias || nUnit, data: {} };
+    appData.processedData[key].data[account] = value;
+    valid++;
+  });
+
+  // Meses = TODOS os meses acumulados no processedData até agora (não reseta a cada import)
+  appData.months = [...new Set(Object.values(appData.processedData).map(i => i.month))].sort(compareMonths);
+
+  if (valid === 0) throw new Error('Nenhuma linha válida. Verifique o formato do mês (jan-26) e da unidade.');
+
+  // Substitui as linhas rejeitadas deste arquivo (evita acumular duplicado em reimportações)
+  appData.rejectedRows = (appData.rejectedRows || []).filter(r => r.file !== pendingFile).concat(rejectedRows);
+
+  // Registra o arquivo na lista de "Arquivos Processados"
+  if (pendingFile) {
+    const record = { name: pendingFile, months: [...monthsInThisFile].sort(compareMonths), importedAt: new Date().toISOString(), rows: valid, invalidRows: invalid };
+    const idx = appData.importedFiles.findIndex(f => f.name === pendingFile);
+    if (idx >= 0) appData.importedFiles[idx] = record; else appData.importedFiles.push(record);
+  }
+
+  // Meses trazidos NESTA importação (usado para perguntar sobre vendas PFB logo em seguida)
+  appData.lastImportedMonths = [...monthsInThisFile].sort(compareMonths);
+}
+
+// ============ CÁLCULOS ============
+// Normaliza para comparação "fuzzy" tolerante a acentos, pontuação e maiúsculas.
+// Ex: "Despesas com Pagto de Mercadorias (Cmv)" e "Despesas com pagto. de mercadorias (C.M.V)"
+// viram a mesma string normalizada, mesmo com o ponto depois de "pagto" e o "(C.M.V)".
+function normalizeForMatch(str) {
+  return normalizeAccents(str)
+    .replace(/[().,;:\-\/]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getAccountValue(unit, month, name) {
+  const d = (appData.processedData[unit+'_'+month] || {}).data || {};
+  if (d[name] !== undefined) return d[name];
+  const ln = normalizeForMatch(name);
+  for (const k in d) if (normalizeForMatch(k).includes(ln)) return d[k];
+  return 0;
+}
+
+// ============ PERÍODO (CONSOLIDAÇÃO DE MESES) ============
+function populatePeriodSelector() {
+  const container = document.getElementById('periodSelector');
+  if (!container) return;
+  const checkedBefore = new Set([...container.querySelectorAll('input:checked')].map(b => b.value));
+  const isFirstRender = container.dataset.rendered !== '1';
+
+  if (!appData.months.length) {
+    container.innerHTML = '<small style="color:var(--secondary)">Nenhum mês importado ainda</small>';
+    container.dataset.rendered = '0';
+    return;
+  }
+
+  let html = '';
+  appData.months.forEach((m, idx) => {
+    const isLast = idx === appData.months.length - 1;
+    const checked = checkedBefore.has(m) || (isFirstRender && isLast);
+    html += `<label class="period-chip"><input type="checkbox" value="${m}" ${checked ? 'checked' : ''} onchange="updateAllReports()"> ${m}</label>`;
+  });
+  container.innerHTML = html;
+  container.dataset.rendered = '1';
+}
+
+// Meses atualmente marcados no seletor de período. Se nenhum estiver marcado
+// (ex: antes do primeiro render), usa o último mês disponível como padrão.
+function getSelectedPeriodMonths() {
+  const container = document.getElementById('periodSelector');
+  const boxes = container ? container.querySelectorAll('input[type=checkbox]:checked') : [];
+  const sel = [...boxes].map(b => b.value);
+  if (sel.length) return appData.months.filter(m => sel.includes(m)); // mantém ordem cronológica
+  return appData.months.length ? [appData.months[appData.months.length - 1]] : [];
+}
+
+// Soma o valor de uma conta ao longo de vários meses (para consolidar período).
+// unit === 'ALL' soma todas as unidades; senão, soma só a unidade indicada.
+// unit pode ser: 'ALL' (todas), uma unidade específica ('01'), ou um array de
+// unidades (['01','02','03','04','05']) — usado pela opção "Rede (Lojas 01 a 05)" do DRE.
+function sumAccountForPeriod(unit, months, accountName) {
+  let total = 0;
+  const ln = normalizeForMatch(accountName);
+  const unitMatches = u => unit === 'ALL' ? true : (Array.isArray(unit) ? unit.includes(u) : u === unit);
+  months.forEach(month => {
+    Object.values(appData.processedData).forEach(item => {
+      if (item.month !== month) return;
+      if (!unitMatches(item.unit)) return;
+      if (item.data[accountName] !== undefined) { total += item.data[accountName]; return; }
+      for (const k in item.data) { if (normalizeForMatch(k).includes(ln)) { total += item.data[k]; break; } }
+    });
+  });
+  return total;
+}
+
+function updateFilesTable() {
+  const tbody = document.getElementById('filesTable');
+  if (!tbody) return;
+  if (!appData.importedFiles.length) { tbody.innerHTML = '<tr><td colspan="5">Nenhum arquivo importado ainda</td></tr>'; return; }
+  const rows = [...appData.importedFiles].sort((a, b) => new Date(b.importedAt) - new Date(a.importedAt));
+  tbody.innerHTML = rows.map(f => {
+    const data = new Date(f.importedAt);
+    const dataFmt = isNaN(data) ? '-' : data.toLocaleString('pt-BR');
+    const invalidCount = f.invalidRows || 0;
+    const invalidCell = invalidCount > 0 ? `<span style="color:var(--danger);font-weight:600">⚠️ ${invalidCount}</span>` : '0';
+    return `<tr><td>${f.name}</td><td>${(f.months || []).join(', ') || '-'}</td><td>${f.rows ?? '-'}</td><td>${invalidCell}</td><td>${dataFmt}</td></tr>`;
+  }).join('');
+}
+
+function updateRejectedRowsTable() {
+  const tbody = document.getElementById('rejectedRowsTable');
+  if (!tbody) return;
+  const rejected = appData.rejectedRows || [];
+  if (!rejected.length) { tbody.innerHTML = '<tr><td colspan="7">Nenhuma linha rejeitada</td></tr>'; return; }
+  tbody.innerHTML = rejected.map(r =>
+    `<tr><td>${r.file}</td><td>${r.row}</td><td>${r.unit}</td><td>${r.month}</td><td>${r.account}</td><td>${r.value}</td><td style="color:var(--danger)">${r.reason}</td></tr>`
+  ).join('');
+}
+
+function getUnitLabel(unit, month) {
+  const item = appData.processedData[unit + '_' + month];
+  return (item && item.alias) ? item.alias : unit;
+}
+
+// calcMetrics agora aceita 1 mês (string) OU vários (array) para consolidar o período
+function calcMetrics(unit, monthOrMonths) {
+  const months = Array.isArray(monthOrMonths) ? monthOrMonths : [monthOrMonths];
+  const vendas = sumAccountForPeriod(unit, months, 'Vendas realizadas');
+  const cmv = sumAccountForPeriod(unit, months, 'C.M.V');
+  const unidades = sumAccountForPeriod(unit, months, 'Unidades vendidas');
+  const salarios = sumAccountForPeriod(unit, months, 'Salários');
+  const colaboradores = sumAccountForPeriod(unit, months, 'colaboradores');
+  const clientes = sumAccountForPeriod(unit, months, 'clientes');
+  return {
+    vendas, cmv, unidades, clientes,
+    margem: vendas > 0 ? ((vendas-cmv)/vendas)*100 : 0,
+    // Ticket Médio = Vendas realizadas durante o período (R$) / Nº de clientes
+    ticketMedio: clientes > 0 ? vendas/clientes : 0,
+    produtividade: colaboradores > 0 ? vendas/colaboradores : 0,
+    custoPessoal: vendas > 0 ? (salarios/vendas)*100 : 0
+  };
+}
+
+// ============ RELATÓRIOS ============
+function updateAllReports() {
+  populatePeriodSelector();
+  updateFilesTable();
+  updateRejectedRowsTable();
+  updateDashboard(); updateDRE(); updateComparativo(); updateKPIs(); updateRawData();
+}
+
+function updateDashboard() {
+  const periodMonths = getSelectedPeriodMonths();
+  const tbody = document.getElementById('unitPerformanceTable');
+  if (!periodMonths.length) {
+    document.getElementById('totalRevenue').textContent = fmtCur(0);
+    document.getElementById('avgTicket').textContent = fmtCur(0);
+    document.getElementById('grossMargin').textContent = fmtPct(0);
+    document.getElementById('unitsSold').textContent = fmtNum(0);
+    document.getElementById('revenueVar').textContent = '-';
+    tbody.innerHTML = '<tr><td colspan="4">Nenhum dado importado</td></tr>';
+    return;
+  }
+
+  const vendas = sumAccountForPeriod('ALL', periodMonths, 'Vendas realizadas');
+  const unidades = sumAccountForPeriod('ALL', periodMonths, 'Unidades vendidas');
+  const cmv = sumAccountForPeriod('ALL', periodMonths, 'C.M.V');
+  const clientes = sumAccountForPeriod('ALL', periodMonths, 'clientes');
+
+  document.getElementById('totalRevenue').textContent = fmtCur(vendas);
+  // Ticket Médio = Vendas realizadas durante o período (R$) / Nº de clientes
+  document.getElementById('avgTicket').textContent = fmtCur(clientes>0?vendas/clientes:0);
+  document.getElementById('grossMargin').textContent = fmtPct(vendas>0?((vendas-cmv)/vendas)*100:0);
+  document.getElementById('unitsSold').textContent = fmtNum(unidades);
+
+  // A variação (MoM) só faz sentido comparando um único mês contra o mês
+  // imediatamente anterior. Com vários meses selecionados, mostramos o
+  // total do período sem comparação percentual.
+  const revenueVarEl = document.getElementById('revenueVar');
+  if (periodMonths.length === 1) {
+    const idx = appData.months.indexOf(periodMonths[0]);
+    const prev = idx > 0 ? appData.months[idx - 1] : null;
+    if (prev) {
+      const pv = sumAccountForPeriod('ALL', [prev], 'Vendas realizadas');
+      const vv = pv > 0 ? ((vendas - pv) / pv) * 100 : 0;
+      revenueVarEl.textContent = (vv > 0 ? '📈 ' : '📉 ') + vv.toFixed(1) + '%';
+    } else {
+      revenueVarEl.textContent = '-';
+    }
+  } else {
+    revenueVarEl.textContent = `Período: ${periodMonths.join(', ')}`;
+  }
+
+  const units = [...new Set(Object.values(appData.processedData).filter(i => periodMonths.includes(i.month)).map(i => i.unit))].sort();
+  tbody.innerHTML = '';
+  if (!units.length) { tbody.innerHTML = '<tr><td colspan="4">Sem dados</td></tr>'; return; }
+  const lastMonthOfPeriod = periodMonths[periodMonths.length - 1];
+  units.forEach(u => {
+    const m = calcMetrics(u, periodMonths);
+    tbody.innerHTML += `<tr><td><strong>${getUnitLabel(u, lastMonthOfPeriod)}</strong></td><td style="white-space:nowrap">${fmtCur(m.vendas)}</td><td style="white-space:nowrap">${fmtCur(m.ticketMedio)}</td><td>${fmtPct(m.margem)}</td></tr>`;
+  });
+}
+
+// ============ ESTRUTURA DO DRE (modelo GRUPO PIRAJUSSARA) ============
+const DRE_LINES = [
+  { code: '1.0',  label: 'FATURAMENTO BRUTO (R$)', type: 'subtotal', children: ['1.1','2.0'] },
+  { code: '1.1',  label: 'Vendas realizadas durante o período (R$)', type: 'account', account: 'Vendas realizadas durante o período (R$)' },
+  { code: '2.0',  label: 'Total de desconto concedido (R$)', type: 'account', account: 'Total de desconto concedido (R$)' },
+  { code: '3.0',  label: 'IMPOSTO SOBRE VENDA', type: 'subtotal', children: ['3.1','3.2'] },
+  { code: '3.1',  label: 'Imposto Federal Pago No Período - Em R$', type: 'account', account: 'Imposto Federal Pago No Período' },
+  { code: '3.2',  label: 'ICMS Pago No Período - Em R$', type: 'account', account: 'ICMS Pago No Período' },
+  { code: '4.0',  label: 'DESPESAS COM MERCADORIAS', type: 'subtotal', children: ['4.1','4.2','4.3','4.4'] },
+  { code: '4.1',  label: 'Despesas com Pagto de Mercadorias (Cmv)', type: 'account', account: 'Despesas com Pagto de Mercadorias' },
+  { code: '4.2',  label: 'Taxas de Cartão de Crédito - Em R$', type: 'account', account: 'Taxas de Cartão de Crédito' },
+  { code: '4.3',  label: 'Taxas de Convênios Terceirizados - Em R$', type: 'account', account: 'Taxas de Convênios Terceirizados' },
+  { code: '4.4',  label: 'Perdas de Cheque / Cartões - Em R$', type: 'account', account: 'Perdas de Cheque' },
+  { code: '5.0',  label: 'DESPESAS OPERACIONAIS COM PESSOAL (FUNCIONÁRIO)', type: 'subtotal', children: ['5.1','5.2','5.3','5.4','5.5','5.6'] },
+  { code: '5.1',  label: 'Salários Fixos + Horas Extras', type: 'account', account: 'Salários Fixos' },
+  { code: '5.2',  label: 'Comissões e Premiações Sobre Vendas', type: 'account', account: 'Comissões e Premiações' },
+  { code: '5.3',  label: 'Provisionamento de 13º. Salário + 1/3 Férias', type: 'account', account: 'Provisionamento de 13' },
+  { code: '5.4',  label: 'Benefícios', type: 'account', account: 'Benefícios' },
+  { code: '5.5',  label: 'Encargos - INSS', type: 'account', account: 'INSS' },
+  { code: '5.6',  label: 'Encargos - FGTS', type: 'account', account: 'FGTS' },
+  { code: '6.0',  label: 'DESPESAS OPERACIONAIS COM PESSOAL (PROPRIETÁRIO)', type: 'subtotal', children: ['6.1'] },
+  { code: '6.1',  label: 'Pró-Labore', type: 'account', account: 'Pró-Labore' },
+  { code: '7.0',  label: 'DESPESAS OPERACIONAIS COM ASSESSORIAS', type: 'subtotal', children: ['7.1','7.2','7.3','7.4','7.5','7.6','7.7'] },
+  { code: '7.1',  label: 'Aluguel do POS de Cartão de Crédito', type: 'account', account: 'Aluguel do POS' },
+  { code: '7.2',  label: 'Escritório de Contabilidade', type: 'account', account: 'Escritório de Contabilidade' },
+  { code: '7.3',  label: 'Assessoria Jurídica', type: 'account', account: 'Assessoria Jurídica' },
+  { code: '7.4',  label: 'Cursos, Treinamentos e Despesas de Viagem', type: 'account', account: 'Cursos, Treinamentos' },
+  { code: '7.5',  label: 'Entidades', type: 'account', account: 'Entidades' },
+  { code: '7.6',  label: 'Manutenção Software + Hardware', type: 'account', account: 'Manutenção Software' },
+  { code: '7.7',  label: 'Outras Despesas com Assessorias', type: 'account', account: 'Outras Despesas com Assessorias' },
+  { code: '8.0',  label: 'DESPESAS OPERACIONAIS ADMINISTRATIVAS', type: 'subtotal', children: ['8.1','8.2','8.3'] },
+  { code: '8.1',  label: 'Seguros da Empresa (Imóvel e Veículos)', type: 'account', account: 'Seguros da Empresa' },
+  { code: '8.2',  label: 'Manutenção de Veículos', type: 'account', account: 'Manutenção de Veículos' },
+  { code: '8.3',  label: 'Cobrador (Caso Terceirizado)', type: 'account', account: 'Cobrador' },
+  { code: '9.0',  label: 'DESPESAS OPERACIONAIS DE FUNCIONAMENTO', type: 'subtotal', children: ['9.1','9.2','9.3','9.4','9.5','9.6','9.7','9.8','9.9','9.10'] },
+  { code: '9.1',  label: 'Aluguel + Condomínio + Iptu', type: 'account', account: 'Aluguel + Condomínio' },
+  { code: '9.2',  label: 'Energia Elétrica', type: 'account', account: 'Energia Elétrica' },
+  { code: '9.3',  label: 'Água / Esgoto', type: 'account', account: 'Água / Esgoto' },
+  { code: '9.4',  label: 'Telefone / Acesso a Internet', type: 'account', account: 'Telefone' },
+  { code: '9.5',  label: 'Material de Limpeza, Cabine de Aplicação, Uso Consumo e Faxina', type: 'account', account: 'Material de Limpeza' },
+  { code: '9.6',  label: 'Consumo Interno - Material de Escritório, Uniformes, Embalagens e Impressos', type: 'account', account: 'Consumo Interno' },
+  { code: '9.7',  label: 'Manutenção de Instalações', type: 'account', account: 'Manutenção de Instalações' },
+  { code: '9.8',  label: 'Taxas e Licenças da Farmácia', type: 'account', account: 'Taxas e Licenças' },
+  { code: '9.9',  label: 'Promoção e Propaganda', type: 'account', account: 'Promoção e Propaganda' },
+  { code: '9.10', label: 'Outras Despesas de Funcionamento', type: 'account', account: 'Outras Despesas de Funcionamento' },
+  { code: '10.0', label: 'DESPESAS FINANCEIRAS', type: 'subtotal', children: ['10.1','10.2'] },
+  { code: '10.1', label: 'Juros de Cheque Especial, Juros de Duplicatas e Demais Juros', type: 'account', account: 'Juros de Cheque Especial' },
+  { code: '10.2', label: 'Tarifas Bancárias', type: 'account', account: 'Tarifas Bancárias' },
+  { code: '11.0', label: 'OUTRAS RECEITAS', type: 'subtotal', children: ['11.1','11.2','11.3'] },
+  { code: '11.1', label: 'Receitas Não Operacionais', type: 'account', account: 'Receitas Não Operacionais' },
+  { code: '11.2', label: 'Recebimento de emprestimos', type: 'account', account: 'Recebimento de emprestimos' },
+  { code: '11.3', label: 'Verbas de Marketing Recebidas', type: 'account', account: 'Verbas de Marketing' },
+  { code: '12.0', label: 'LUCRO LÍQUIDO', type: 'computed', formula: 'lucroLiquido', highlight: true },
+  { code: '13.0', label: 'DESPESAS EXTRAS', type: 'subtotal', children: ['13.1','13.2','13.3','13.4','13.5','13.6'] },
+  { code: '13.1', label: 'Produtos Vencidos', type: 'account', account: 'Produtos Vencidos' },
+  { code: '13.2', label: 'Quebra de Inventário', type: 'account', account: 'Quebra de Inventário' },
+  { code: '13.3', label: 'Investimento em Máquinas / Equipamentos / Móveis', type: 'account', account: 'Investimento em Máquinas' },
+  { code: '13.4', label: 'Reforma do Imóvel', type: 'account', account: 'Reforma do Imóvel' },
+  { code: '13.5', label: 'Pagamento de Empréstimos / Financiamento', type: 'account', account: 'Pagamento de Empréstimos' },
+  { code: '13.6', label: 'Retirada de Lucro pelo Proprietário', type: 'account', account: 'Retirada de Lucro' },
+  { code: '14.0', label: 'RESULTADO FINAL DA OPERAÇÃO', type: 'computed', formula: 'resultadoFinal', highlight: true },
+  { code: '15.0', label: 'MARGEM DE CONTRIBUIÇÃO', type: 'computed', formula: 'margemContribuicao' },
+  { code: '16.0', label: 'CUSTOS FIXOS', type: 'computed', formula: 'custosFixos' },
+  { code: '17.0', label: 'PONTO DE EQUILÍBRIO (R$)', type: 'computed', formula: 'pontoEquilibrio' }
+];
+
+// Unidades que compõem a "Rede" de lojas (exclui Escritório/ESC e Diretoria/DIRET).
+// Usadas pela opção "Rede (Lojas 01 a 05)" do filtro "Visualizar" do DRE.
+const REDE_UNITS = ['01', '02', '03', '04', '05'];
+
+// Busca o valor de uma conta (por nome, com fallback fuzzy) somando as unidades
+// e os meses do período que atendem ao filtro (unitFilter === 'ALL' soma todas as
+// unidades; senão, só a unidade escolhida). months é sempre um array.
+function getDREValue(months, accountName, unitFilter) {
+  return sumAccountForPeriod(unitFilter, months, accountName);
+}
+
+function populateDREUnitFilter() {
+  const select = document.getElementById('dreUnitFilter');
+  const current = select.value || 'ALL';
+  const units = [...new Set(Object.values(appData.processedData).map(i => i.unit))].sort();
+  let html = '<option value="ALL">Consolidado (todas as unidades)</option>';
+  // Opção fixa: soma só as lojas 01 a 05 (exclui Escritório/ESC e Diretoria/DIRET)
+  if (units.some(u => REDE_UNITS.includes(u))) {
+    html += '<option value="REDE">Rede (Lojas 01 a 05)</option>';
+  }
+  units.forEach(u => {
+    // pega o apelido mais recente disponível para essa unidade
+    const withAlias = Object.values(appData.processedData).find(i => i.unit === u && i.alias);
+    const label = withAlias ? withAlias.alias : u;
+    html += `<option value="${u}">${label}</option>`;
+  });
+  select.innerHTML = html;
+  // preserva a seleção anterior se ainda existir entre as opções
+  if ([...select.options].some(o => o.value === current)) select.value = current;
+}
+
+// Roda os 3 passos de cálculo do DRE (contas -> subtotais -> linhas calculadas)
+// para um conjunto de meses e um filtro de unidade (string 'ALL'/'01'/array de unidades).
+// Reutilizada tanto para o filtro selecionado pelo usuário quanto para o
+// cálculo fixo da opção "Rede (Lojas 01 a 05)" do filtro do DRE.
+function computeDREValues(periodMonths, unitFilter) {
+  const v = {};
+  DRE_LINES.forEach(line => {
+    if (line.type === 'account') v[line.code] = getDREValue(periodMonths, line.account, unitFilter);
+  });
+  DRE_LINES.forEach(line => {
+    if (line.type === 'subtotal') v[line.code] = line.children.reduce((s, c) => s + (v[c] || 0), 0);
+  });
+  DRE_LINES.forEach(line => {
+    if (line.type !== 'computed') return;
+    switch (line.formula) {
+      case 'lucroLiquido':
+        v[line.code] = (v['1.1']||0) - (v['3.0']||0) - (v['4.0']||0) - (v['5.0']||0) - (v['6.0']||0) - (v['7.0']||0) - (v['8.0']||0) - (v['9.0']||0) - (v['10.0']||0) + (v['11.0']||0);
+        break;
+      case 'resultadoFinal':
+        v[line.code] = (v['12.0']||0) - (v['13.0']||0);
+        break;
+      case 'margemContribuicao':
+        v[line.code] = (v['1.1']||0) - (v['4.0']||0) - (v['5.2']||0);
+        break;
+      case 'custosFixos':
+        v[line.code] = (v['3.0']||0) + (v['5.0']||0) + (v['6.0']||0) + (v['7.0']||0) + (v['8.0']||0) + (v['9.0']||0) + (v['10.0']||0);
+        break;
+      case 'pontoEquilibrio': {
+        const margemPct = (v['1.1']||0) > 0 ? (v['15.0']||0) / v['1.1'] : 0;
+        v[line.code] = margemPct > 0 ? (v['16.0']||0) / margemPct : 0;
+        break;
+      }
+    }
+  });
+  return v;
+}
+
+// ============ ANÁLISE HORIZONTAL (VARIAÇÃO) ============
+// Códigos do DRE onde SUBIR é bom (receitas e resultados). Todo o resto
+// (impostos, custos, despesas, custos fixos, ponto de equilíbrio) é tratado
+// como "subir é ruim" — por isso uma despesa que cresce aparece em vermelho
+// com seta pra baixo, mesmo o valor numérico tendo aumentado.
+const FAVORABLE_UP_CODES = ['1.0', '1.1', '11.0', '11.1', '11.2', '11.3', '12.0', '14.0', '15.0'];
+
+// Descobre qual é o "mês atual" (o mais recente do período selecionado) e
+// quais são os "meses anteriores" pra servir de base de comparação:
+// - Se 2+ meses estão selecionados: base = os demais meses SELECIONADOS
+//   (ex: selecionou jan a jun -> base = jan a mai, atual = jun).
+// - Se só 1 mês está selecionado: base = TODOS os meses já importados que
+//   vêm antes dele cronologicamente (ex: selecionou só abril, mas jan/fev/mar
+//   já foram importados antes -> usa os 3 como base). Assim a variação
+//   sempre aparece, mesmo com um único mês marcado no seletor de Período.
+function getVariacaoBaseline(periodMonths) {
+  if (!periodMonths.length) return { currentMonth: null, baselineMonths: [] };
+  const currentMonth = periodMonths[periodMonths.length - 1];
+  let baselineMonths;
+  if (periodMonths.length > 1) {
+    baselineMonths = periodMonths.slice(0, -1);
+  } else {
+    const idx = appData.months.indexOf(currentMonth);
+    baselineMonths = idx > 0 ? appData.months.slice(0, idx) : [];
+  }
+  return { currentMonth, baselineMonths };
+}
+
+// Compara o mês atual contra a MÉDIA dos meses anteriores (análise
+// horizontal). Retorna null se não houver nenhum mês anterior pra comparar
+// (ex: é o primeiro mês já importado, sem histórico antes dele).
+function computeVariacaoDRE(periodMonths, unitFilter) {
+  const { currentMonth, baselineMonths } = getVariacaoBaseline(periodMonths);
+  if (!currentMonth || !baselineMonths.length) return null;
+  const vCurrent = computeDREValues([currentMonth], unitFilter);
+  const vBaseSum = computeDREValues(baselineMonths, unitFilter);
+  const result = {};
+  DRE_LINES.forEach(line => {
+    const cur = vCurrent[line.code] || 0;
+    const baseAvg = (vBaseSum[line.code] || 0) / baselineMonths.length;
+    result[line.code] = (baseAvg !== 0) ? ((cur - baseAvg) / Math.abs(baseAvg)) * 100 : (cur === 0 ? 0 : null);
+  });
+  return result;
+}
+
+// Monta o "chip" visual da variação: verde+▲ quando favorável ao negócio,
+// vermelho+▼ quando desfavorável — considerando se subir é bom (goodWhenUp)
+// ou ruim pra aquela linha específica.
+function renderVariacaoCell(pct, goodWhenUp) {
+  if (pct === null || pct === undefined) return '<span style="color:#94a3b8">-</span>';
+  const increased = pct >= 0;
+  const favoravel = increased === goodWhenUp;
+  const color = favoravel ? '#059669' : '#dc2626';
+  const arrow = favoravel ? '▲' : '▼';
+  const sign = pct >= 0 ? '+' : '';
+  return `<span style="color:${color};font-weight:700;white-space:nowrap">${sign}${pct.toFixed(1)}% ${arrow}</span>`;
+}
+
+function updateDRE() {
+  const tbody = document.getElementById('dreBody');
+  populateDREUnitFilter();
+  const periodMonths = getSelectedPeriodMonths();
+  if (!periodMonths.length) { tbody.innerHTML = '<tr><td colspan="5">Nenhum dado importado</td></tr>'; document.getElementById('drePeriodLabel').textContent = ''; return; }
+
+  const unitFilterRaw = document.getElementById('dreUnitFilter').value || 'ALL';
+  // "REDE" é uma opção especial do filtro: soma só as lojas 01 a 05
+  // (exclui Escritório/ESC e Diretoria/DIRET). Vira um array de unidades.
+  const unitFilter = unitFilterRaw === 'REDE' ? REDE_UNITS : unitFilterRaw;
+  document.getElementById('drePeriodLabel').textContent = 'Período: ' + periodMonths.join(', ');
+
+  const v = computeDREValues(periodMonths, unitFilter);
+  const variacao = computeVariacaoDRE(periodMonths, unitFilter);
+
+  const base = v['1.0'] || 0; // % sempre sobre o Faturamento Bruto (do filtro selecionado)
+  let html = '';
+  DRE_LINES.forEach(line => {
+    const value = v[line.code] || 0;
+    const isChild = !line.code.endsWith('.0');
+    const pct = base > 0 ? (value / base) * 100 : 0;
+    const varCell = variacao ? renderVariacaoCell(variacao[line.code], FAVORABLE_UP_CODES.includes(line.code)) : '<span style="color:#94a3b8">-</span>';
+    const rowStyle = line.highlight ? 'background:#dbeafe;font-weight:bold'
+                    : (!isChild ? 'background:#f0f0f0;font-weight:bold' : '');
+    const labelStyle = isChild ? 'padding-left:2rem' : '';
+    html += `<tr style="${rowStyle}"><td>${line.code}</td><td style="${labelStyle}">${line.label}</td><td style="white-space:nowrap">${fmtCur(value)}</td><td style="white-space:nowrap">${pct.toFixed(2)}%</td><td style="white-space:nowrap">${varCell}</td></tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+function updateComparativo() {
+  const momBody = document.getElementById('momBody');
+  if (appData.months.length<2) { momBody.innerHTML='<tr><td colspan="5">Necessário 2 meses</td></tr>'; }
+  else {
+    const cur = appData.months[appData.months.length-1], prev = appData.months[appData.months.length-2];
+    let cv=0,cc=0,cu=0,pv=0,pc=0,pu=0;
+    Object.values(appData.processedData).forEach(it=>{
+      if(it.month===cur){cv+=getAccountValue(it.unit,cur,'Vendas realizadas');cc+=getAccountValue(it.unit,cur,'C.M.V');cu+=getAccountValue(it.unit,cur,'Unidades vendidas');}
+      if(it.month===prev){pv+=getAccountValue(it.unit,prev,'Vendas realizadas');pc+=getAccountValue(it.unit,prev,'C.M.V');pu+=getAccountValue(it.unit,prev,'Unidades vendidas');}
+    });
+    const metrics = [
+      {n:'Faturamento',a:cv,b:pv,f:'cur'},
+      {n:'Unidades',a:cu,b:pu,f:'num'},
+      {n:'Margem %',a:cv>0?((cv-cc)/cv)*100:0,b:pv>0?((pv-pc)/pv)*100:0,f:'pct'}
+    ];
+    let html='';
+    metrics.forEach(m=>{
+      const varr = m.b>0?((m.a-m.b)/m.b)*100:0;
+      const fmt = m.f==='cur'?fmtCur:m.f==='pct'?fmtPct:fmtNum;
+      html += `<tr><td>${m.n}</td><td style="white-space:nowrap">${fmt(m.a)}</td><td style="white-space:nowrap">${fmt(m.b)}</td><td>${varr.toFixed(1)}%</td><td>${varr>0?'✅ Crescimento':varr<0?'⚠️ Queda':'➡️ Estável'}</td></tr>`;
+    });
+    momBody.innerHTML = html;
+  }
+
+  const ytdBody = document.getElementById('ytdBody');
+  const monthSelect = document.getElementById('ytdMonthSelect');
+  if (!appData.months.length) {
+    ytdBody.innerHTML = '<tr><td colspan="5">Sem dados</td></tr>';
+    monthSelect.innerHTML = '';
+    return;
+  }
+
+  // Popula o seletor de mês, preservando a seleção anterior se ainda existir
+  const currentSelection = monthSelect.value;
+  monthSelect.innerHTML = appData.months.map(m => `<option value="${m}">${m}</option>`).join('');
+  monthSelect.value = appData.months.includes(currentSelection) ? currentSelection : appData.months[appData.months.length - 1];
+
+  const selectedMonth = monthSelect.value;
+  const idx = appData.months.indexOf(selectedMonth);
+  const prevMonths = appData.months.slice(0, idx); // todos os meses cronologicamente ANTES do selecionado
+
+  const monthTotal = (month, account) => sumAccountForPeriod('ALL', [month], account);
+  const monthMargin = (month) => {
+    const v = monthTotal(month, 'Vendas realizadas');
+    const c = monthTotal(month, 'C.M.V');
+    return v > 0 ? ((v - c) / v) * 100 : 0;
+  };
+
+  if (!prevMonths.length) {
+    ytdBody.innerHTML = `<tr><td colspan="5">Não há meses anteriores a ${selectedMonth} para comparar</td></tr>`;
+    return;
+  }
+
+  const vendasAtual = monthTotal(selectedMonth, 'Vendas realizadas');
+  const unidadesAtual = monthTotal(selectedMonth, 'Unidades vendidas');
+  const margemAtual = monthMargin(selectedMonth);
+
+  // Média (não soma) dos meses anteriores: soma de cada mês dividida pela
+  // quantidade de meses anteriores — ex: acumulado jan+fev dividido por 2.
+  const vendasMedia = prevMonths.reduce((s, m) => s + monthTotal(m, 'Vendas realizadas'), 0) / prevMonths.length;
+  const unidadesMedia = prevMonths.reduce((s, m) => s + monthTotal(m, 'Unidades vendidas'), 0) / prevMonths.length;
+  const margemMedia = prevMonths.reduce((s, m) => s + monthMargin(m), 0) / prevMonths.length;
+
+  const rows = [
+    { n: 'Faturamento', atual: vendasAtual, media: vendasMedia, fmt: fmtCur, isPct: false },
+    { n: 'Unidades Vendidas', atual: unidadesAtual, media: unidadesMedia, fmt: fmtNum, isPct: false },
+    { n: 'Margem %', atual: margemAtual, media: margemMedia, fmt: fmtPct, isPct: true }
+  ];
+
+  let html = '';
+  rows.forEach(r => {
+    let varLabel, statusVar;
+    if (r.isPct) {
+      // Para métricas que já são percentuais (Margem), a variação é mostrada
+      // em pontos percentuais (p.p.), não percentual relativo.
+      const diff = r.atual - r.media;
+      varLabel = (diff >= 0 ? '+' : '') + diff.toFixed(1) + ' p.p.';
+      statusVar = diff;
+    } else {
+      const varr = r.media > 0 ? ((r.atual - r.media) / r.media) * 100 : 0;
+      varLabel = (varr >= 0 ? '+' : '') + varr.toFixed(1) + '%';
+      statusVar = varr;
+    }
+    const status = statusVar > 0 ? '✅ Crescimento' : statusVar < 0 ? '⚠️ Queda' : '➡️ Estável';
+    html += `<tr><td>${r.n}</td><td style="white-space:nowrap">${r.fmt(r.atual)}</td><td style="white-space:nowrap">${r.fmt(r.media)}</td><td style="white-space:nowrap">${varLabel}</td><td>${status}</td></tr>`;
+  });
+  ytdBody.innerHTML = html;
+}
+
+function updateKPIs() {
+  const periodMonths = getSelectedPeriodMonths();
+  const catBody = document.getElementById('productCategoryTable');
+  const uaBody = document.getElementById('unitAnalysisTable');
+  updatePFBTable(); // tabela de PFB por mês sempre reflete todo o histórico, não só o período selecionado
+
+  if (!periodMonths.length) {
+    document.getElementById('productivity').textContent = fmtCur(0);
+    document.getElementById('laborCost').textContent = fmtPct(0);
+    document.getElementById('activeCustomers').textContent = fmtNum(0);
+    document.getElementById('salesArea').textContent = '0 m²';
+    document.getElementById('pfbShare').textContent = fmtPct(0);
+    document.getElementById('pfbShareValue').textContent = '';
+    document.getElementById('deliveryShare').textContent = fmtPct(0);
+    document.getElementById('deliveryShareValue').textContent = '';
+    document.getElementById('gsShare').textContent = fmtPct(0);
+    document.getElementById('gsValue').textContent = '';
+    document.getElementById('gsVariacao').textContent = '';
+    catBody.innerHTML = '<tr><td colspan="3">Nenhum dado importado</td></tr>';
+    uaBody.innerHTML = '<tr><td colspan="5">Nenhum dado importado</td></tr>';
+    return;
+  }
+  const vendas = sumAccountForPeriod('ALL', periodMonths, 'Vendas realizadas');
+  const salarios = sumAccountForPeriod('ALL', periodMonths, 'Salários');
+  const colab = sumAccountForPeriod('ALL', periodMonths, 'colaboradores');
+  const clientes = sumAccountForPeriod('ALL', periodMonths, 'clientes');
+  const area = sumAccountForPeriod('ALL', periodMonths, 'área de vendas');
+  const generico = sumAccountForPeriod('ALL', periodMonths, 'genéricos');
+  const propagado = sumAccountForPeriod('ALL', periodMonths, 'propagados');
+  const similar = sumAccountForPeriod('ALL', periodMonths, 'similares');
+  const perfumaria = sumAccountForPeriod('ALL', periodMonths, 'Perfumaria');
+  const outros = sumAccountForPeriod('ALL', periodMonths, 'Outros produtos');
+  // PFB (Farmácia Popular do Brasil): informado manualmente por mês, não vem do arquivo importado
+  const pfbTotal = periodMonths.reduce((s, m) => s + (appData.pfbByMonth[m] || 0), 0);
+  // Delivery: vem do arquivo importado, conta "Venda delivery"
+  const deliveryTotal = sumAccountForPeriod('ALL', periodMonths, 'Venda delivery');
+  // G+S (Genéricos + Similares): soma das duas curvas de produto já rastreadas no mix
+  const gsTotal = generico + similar;
+
+  document.getElementById('productivity').textContent = fmtCur(colab>0?vendas/colab:0);
+  // Custo de Pessoal = Salários Fixos + Horas Extras / Vendas realizadas
+  document.getElementById('laborCost').textContent = fmtPct(vendas>0?(salarios/vendas)*100:0);
+  document.getElementById('activeCustomers').textContent = fmtNum(clientes);
+  document.getElementById('salesArea').textContent = fmtNum(area)+' m²';
+  // Participação PFB = Vendas PFB informadas / Vendas realizadas durante o período (R$)
+  document.getElementById('pfbShare').textContent = fmtPct(vendas>0?(pfbTotal/vendas)*100:0);
+  document.getElementById('pfbShareValue').textContent = 'PFB: ' + fmtCur(pfbTotal);
+  // Participação Delivery = Venda delivery / Vendas realizadas durante o período (R$)
+  document.getElementById('deliveryShare').textContent = fmtPct(vendas>0?(deliveryTotal/vendas)*100:0);
+  document.getElementById('deliveryShareValue').textContent = 'Delivery: ' + fmtCur(deliveryTotal);
+  // G+S: % de participação em evidência (kpi-value), com a soma em R$ abaixo,
+  // e variação usando a mesma base do DRE (funciona mesmo com 1 mês
+  // selecionado, puxando o histórico anterior já importado).
+  document.getElementById('gsShare').textContent = fmtPct(vendas>0?(gsTotal/vendas)*100:0);
+  document.getElementById('gsValue').textContent = 'G+S: ' + fmtCur(gsTotal);
+  const { currentMonth: gsCurrentMonth, baselineMonths: gsBaselineMonths } = getVariacaoBaseline(periodMonths);
+  if (gsCurrentMonth && gsBaselineMonths.length) {
+    const gsCurrent = sumAccountForPeriod('ALL', [gsCurrentMonth], 'genéricos') + sumAccountForPeriod('ALL', [gsCurrentMonth], 'similares');
+    const gsBaseSum = sumAccountForPeriod('ALL', gsBaselineMonths, 'genéricos') + sumAccountForPeriod('ALL', gsBaselineMonths, 'similares');
+    const gsBaseAvg = gsBaseSum / gsBaselineMonths.length;
+    const gsPct = gsBaseAvg !== 0 ? ((gsCurrent - gsBaseAvg) / Math.abs(gsBaseAvg)) * 100 : (gsCurrent === 0 ? 0 : null);
+    document.getElementById('gsVariacao').innerHTML = renderVariacaoCell(gsPct, true); // mais G+S vendido = favorável
+  } else {
+    document.getElementById('gsVariacao').innerHTML = '<span style="color:#e2e8f0">Sem mês anterior p/ comparar</span>';
+  }
+
+  catBody.innerHTML='';
+  [['Genéricos',generico],['Propagados',propagado],['Similares',similar],['Perfumaria',perfumaria],['Outros',outros]].forEach(([n,v])=>{
+    catBody.innerHTML += `<tr><td>${n}</td><td style="white-space:nowrap">${fmtCur(v)}</td><td>${fmtPct(vendas>0?(v/vendas)*100:0)}</td></tr>`;
+  });
+
+  const units = [...new Set(Object.values(appData.processedData).filter(i=>periodMonths.includes(i.month)).map(i=>i.unit))].sort();
+  uaBody.innerHTML='';
+  if (!units.length) { uaBody.innerHTML = '<tr><td colspan="5">Sem dados</td></tr>'; return; }
+  const lastMonthOfPeriod = periodMonths[periodMonths.length - 1];
+  units.forEach(u=>{
+    const m = calcMetrics(u, periodMonths);
+    uaBody.innerHTML += `<tr><td>${getUnitLabel(u, lastMonthOfPeriod)}</td><td style="white-space:nowrap">${fmtCur(m.ticketMedio)}</td><td>${fmtPct(m.margem)}</td><td style="white-space:nowrap">${fmtCur(m.produtividade)}</td><td>${fmtPct(m.custoPessoal)}</td></tr>`;
+  });
+}
+
+// Tabela de gestão do PFB por mês — mostra TODO o histórico de meses importados,
+// independente do período selecionado no seletor global, para o usuário poder
+// revisar ou corrigir qualquer mês.
+function updatePFBTable() {
+  const tbody = document.getElementById('pfbTable');
+  if (!tbody) return;
+  if (!appData.months.length) { tbody.innerHTML = '<tr><td colspan="5">Nenhum mês importado ainda</td></tr>'; return; }
+  tbody.innerHTML = appData.months.map(m => {
+    const vendasMes = sumAccountForPeriod('ALL', [m], 'Vendas realizadas');
+    const pfb = appData.pfbByMonth[m];
+    const pfbDisplay = pfb !== undefined ? fmtCur(pfb) : '<span style="color:var(--secondary)">Não informado</span>';
+    const pct = (pfb !== undefined && vendasMes > 0) ? fmtPct((pfb / vendasMes) * 100) : '-';
+    return `<tr><td>${m}</td><td style="white-space:nowrap">${pfbDisplay}</td><td style="white-space:nowrap">${fmtCur(vendasMes)}</td><td>${pct}</td><td><button class="btn btn-secondary" style="padding:.3rem .6rem;font-size:.8rem" onclick="editPFBMonth('${m}')">✏️ Editar</button></td></tr>`;
+  }).join('');
+}
+
+// Abre o modal de digitação para informar/corrigir o PFB de um mês específico
+function editPFBMonth(month) {
+  const existing = appData.pfbByMonth[month];
+  const defaultValue = existing !== undefined ? String(existing).replace('.', ',') : '';
+  showPromptModal(`Vendas PFB de ${month} (R$):`, defaultValue, (value) => {
+    const parsed = parseValorBR(value);
+    appData.pfbByMonth[month] = parsed;
+    localStorage.setItem('dreData', JSON.stringify(appData));
+    updateKPIs();
+    showStatus(`✅ Vendas PFB de ${month} atualizadas: ${fmtCur(parsed)}`, 'success');
+  });
+}
+
+function updateRawData() {
+  const tbody = document.getElementById('rawDataBody'); tbody.innerHTML='';
+  if (!appData.rawData.length) { tbody.innerHTML='<tr><td colspan="5">Nenhum dado importado</td></tr>'; return; }
+  const map = appData.columnMapping;
+  appData.rawData.forEach(row => {
+    const alias = map.alias ? (row[map.alias] || '-') : '-';
+    tbody.innerHTML += `<tr><td>${row[map.unit]||'-'}</td><td>${alias}</td><td>${row[map.month]||'-'}</td><td>${row[map.account]||'-'}</td><td>${fmtCur(parseValorBR(row[map.value]))}</td></tr>`;
+  });
+}
+
+function filterData() {
+  const f = document.getElementById('filterInput').value.toLowerCase();
+  document.querySelectorAll('#rawDataBody tr').forEach(r => { r.style.display = r.textContent.toLowerCase().includes(f) ? '' : 'none'; });
+}
+
+// ============ UTIL ============
+function fmtCur(v){ return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0); }
+function fmtPct(v){ return (v||0).toFixed(1)+'%'; }
+function fmtNum(v){ return new Intl.NumberFormat('pt-BR').format(Math.round(v||0)); }
+
+function showStatus(msg, type) {
+  const el = document.getElementById('importStatus');
+  el.textContent = msg;
+  el.className = 'status-message show ' + type;
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  document.querySelector(`.tab-btn[data-tab="${name}"]`).classList.add('active');
+  updateAllReports();
+}
+
+function resetForm() {
+  document.getElementById('fileInput').value = '';
+  appData.rawData = [];
+  pendingFile = null;
+  document.getElementById('importBtn').disabled = true;
+  showStatus('Formulário limpo', 'info');
+}
+
+function clearAllData() {
+  showConfirmModal('Tem certeza que deseja limpar TODOS os dados? Esta ação não pode ser desfeita.', () => {
+    appData = { rawData: [], processedData: {}, months: [], columnMapping: {}, importedFiles: [], rejectedRows: [], pfbByMonth: {} };
+    localStorage.removeItem('dreData');
+    document.getElementById('fileInput').value = '';
+    pendingFile = null;
+    document.getElementById('importBtn').disabled = true;
+    showStatus('Todos os dados foram removidos', 'success');
+    updateAllReports();
+  });
+}
+
+function exportPDF() { window.print(); }
+
+// Abre uma janela limpa só com a tabela do DRE (título, período, unidade e
+// data de geração) e chama a impressão do navegador — de lá o usuário pode
+// imprimir em papel ou escolher "Salvar como PDF" na própria caixa de diálogo.
+// Classifica cada linha do DRE por categoria visual, pra colorir e agrupar
+// na impressão: verde = receitas, vermelho = despesas/custos, azul = resultados
+// (linhas de destaque), roxo = indicadores (margem/custos fixos/ponto de equilíbrio).
+function getDRELineCategory(code) {
+  const num = parseFloat(code);
+  if (num === 12 || num === 14) return { color: '#1d4ed8', bg: '#eff6ff', label: 'Resultado' };
+  if (num >= 15) return { color: '#7c3aed', bg: '#f5f3ff', label: 'Indicador' };
+  if (num <= 2 || num === 11) return { color: '#059669', bg: '#ecfdf5', label: 'Receita' };
+  return { color: '#dc2626', bg: '#fef2f2', label: 'Despesa/Custo' };
+}
+
+// Monta as linhas da tabela de impressão do zero (não reaproveita o HTML da
+// tela), pra ter controle total do layout: cabeçalhos de grupo com faixa
+// colorida e código destacado, contas-filho recuadas e mais discretas, e
+// banners inteiros para Lucro Líquido / Resultado Final.
+function buildDREPrintRows(v, variacao) {
+  const base = v['1.0'] || 0;
+  let html = '';
+  let lastGroup = null;
+  DRE_LINES.forEach(line => {
+    const value = v[line.code] || 0;
+    const isChild = !line.code.endsWith('.0');
+    const pct = base > 0 ? (value / base) * 100 : 0;
+    const cat = getDRELineCategory(line.code);
+    const groupKey = line.code.split('.')[0];
+    const isNewGroup = !isChild && groupKey !== lastGroup;
+    if (!isChild) lastGroup = groupKey;
+    const varCell = variacao ? renderVariacaoCell(variacao[line.code], FAVORABLE_UP_CODES.includes(line.code)) : '<span style="color:#cbd5e1">-</span>';
+
+    if (line.highlight) {
+      html += `<tr>
+        <td colspan="2" style="padding:16px 18px;border-left:6px solid ${cat.color};background:${cat.bg};font-weight:800;font-size:1.05rem;color:${cat.color};border-radius:6px 0 0 6px">${line.code} &nbsp;${line.label}</td>
+        <td style="padding:16px 18px;background:${cat.bg};font-weight:800;font-size:1.15rem;color:${cat.color};text-align:right;white-space:nowrap">${fmtCur(value)}</td>
+        <td style="padding:16px 18px;background:${cat.bg};font-weight:800;color:${cat.color};text-align:right;white-space:nowrap">${pct.toFixed(2)}%</td>
+        <td style="padding:16px 18px;background:${cat.bg};text-align:right;white-space:nowrap;border-radius:0 6px 6px 0">${varCell}</td>
+      </tr>
+      <tr><td colspan="5" style="height:10px;border:none"></td></tr>`;
+    } else if (!isChild) {
+      html += `<tr class="group-row" style="${isNewGroup ? 'border-top:2px solid #e2e8f0;' : ''}">
+        <td style="padding:10px 14px;border-left:5px solid ${cat.color};font-weight:700;color:#0f172a;background:#f8fafc">${line.code}</td>
+        <td style="padding:10px 14px;font-weight:700;color:#0f172a;text-transform:uppercase;font-size:.82rem;letter-spacing:.03em;background:#f8fafc">${line.label}</td>
+        <td style="padding:10px 14px;font-weight:700;text-align:right;white-space:nowrap;background:#f8fafc">${fmtCur(value)}</td>
+        <td style="padding:10px 14px;font-weight:700;text-align:right;white-space:nowrap;color:#64748b;background:#f8fafc">${pct.toFixed(2)}%</td>
+        <td style="padding:10px 14px;text-align:right;white-space:nowrap;background:#f8fafc">${varCell}</td>
+      </tr>`;
+    } else {
+      html += `<tr class="detail-row">
+        <td style="padding:5px 14px 5px 22px;color:#cbd5e1;font-size:.75rem;border-left:2px solid #f1f5f9">${line.code}</td>
+        <td style="padding:5px 14px;padding-left:1.6rem;color:#475569;font-size:.83rem">${line.label}</td>
+        <td style="padding:5px 14px;text-align:right;color:#334155;font-size:.83rem;white-space:nowrap">${fmtCur(value)}</td>
+        <td style="padding:5px 14px;text-align:right;color:#94a3b8;font-size:.78rem;white-space:nowrap">${pct.toFixed(2)}%</td>
+        <td style="padding:5px 14px;text-align:right;white-space:nowrap;font-size:.78rem">${varCell}</td>
+      </tr>`;
+    }
+  });
+  return html;
+}
+
+function printDRE() {
+  const periodMonths = getSelectedPeriodMonths();
+  if (!periodMonths.length) { showStatus('❌ Nenhum dado para imprimir', 'error'); return; }
+
+  const unitSelect = document.getElementById('dreUnitFilter');
+  const unitFilterRaw = unitSelect.value || 'ALL';
+  const unitLabel = unitSelect.options[unitSelect.selectedIndex] ? unitSelect.options[unitSelect.selectedIndex].text : 'Consolidado';
+  const unitFilter = unitFilterRaw === 'REDE' ? REDE_UNITS : unitFilterRaw;
+  const v = computeDREValues(periodMonths, unitFilter);
+  const variacao = computeVariacaoDRE(periodMonths, unitFilter);
+  const rowsHtml = buildDREPrintRows(v, variacao);
+  const geradoEm = new Date().toLocaleString('pt-BR');
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    showStatus('❌ O navegador bloqueou a janela de impressão. Permita pop-ups para este site e tente novamente.', 'error');
+    return;
+  }
+
+  printWindow.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>DRE Pirajussara - ${periodMonths.join(', ')}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color:#1e293b; padding: 28px 32px; background:#fff; }
+  .top-bar { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
+  .brand { display:flex; align-items:center; gap:12px; }
+  .brand-badge { width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg,#1d4ed8,#2563eb); display:flex; align-items:center; justify-content:center; font-size:1.4rem; }
+  h1 { font-size: 1.25rem; color:#0f172a; }
+  .subtitle { color:#64748b; font-size:.85rem; }
+  .meta-bar { display:flex; gap:10px; flex-wrap:wrap; margin:14px 0 18px; }
+  .meta-chip { background:#f1f5f9; border-radius:20px; padding:5px 14px; font-size:.78rem; color:#334155; font-weight:600; }
+  .legend { display:flex; gap:16px; margin-bottom:14px; flex-wrap:wrap; }
+  .legend-item { display:flex; align-items:center; gap:6px; font-size:.72rem; color:#64748b; }
+  .legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+  table { width:100%; border-collapse: collapse; font-size: 0.82rem; border-radius:8px; overflow:hidden; }
+  th { background:#0f172a; color:#fff; padding:10px 14px; text-align:left; font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; }
+  th:nth-child(3), th:nth-child(4), th:nth-child(5) { text-align:right; }
+  td { border-bottom: 1px solid #f1f5f9; }
+  .footer { margin-top: 22px; font-size:0.72rem; color:#94a3b8; text-align:right; border-top:1px solid #e2e8f0; padding-top:10px; }
+  @media print {
+    body { padding: 10mm; }
+    @page { size: A4 landscape; margin: 10mm; }
+  }
+</style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="brand">
+      <div class="brand-badge">📊</div>
+      <div>
+        <h1>DRE Consolidado — DRE Pirajussara</h1>
+        <div class="subtitle">Grupo Farmacêutico Pirajussara</div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-bar">
+    <span class="meta-chip">📅 Período: ${periodMonths.join(', ')}</span>
+    <span class="meta-chip">🏪 Visualização: ${unitLabel}</span>
+  </div>
+  <div class="legend">
+    <span class="legend-item"><span class="legend-dot" style="background:#059669"></span>Receita</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#dc2626"></span>Despesa / Custo</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#1d4ed8"></span>Resultado</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#7c3aed"></span>Indicador</span>
+  </div>
+  <table>
+    <thead><tr><th>Cód.</th><th>Linha</th><th>Valor</th><th>% s/ Faturamento</th><th>Variação</th></tr></thead>
+    <tbody>${rowsHtml}</tbody>
+  </table>
+  <div class="footer">Gerado em ${geradoEm} — DRE Alpha_WQA</div>
+</body>
+</html>`);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+}
+// ============ ANALYTICS BI (módulo novo e isolado — reutiliza os cálculos
+// existentes: computeDREValues, computeVariacaoDRE, renderVariacaoCell,
+// sumAccountForPeriod. Nenhuma regra de negócio duplicada.) ============
+const ABI_DONUT_COLORS = {
+  pessoal: '#3b82f6', impostos: '#ef4444', funcionamento: '#10b981',
+  financeiras: '#f97316', assessorias: '#8b5cf6', administrativas: '#dc2626', extras: '#9ca3af'
+};
+let abiSelectedMonth = null;
+const abiCharts = {};
+
+function abiFmtCompact(v) {
+  if (!isFinite(v)) return '—';
+  const a = Math.abs(v), s = v < 0 ? '-' : '';
+  if (a >= 1e6) return s + 'R$ ' + (a / 1e6).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + 'M';
+  if (a >= 1e3) return s + 'R$ ' + (a / 1e3).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' mil';
+  return s + 'R$ ' + a.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+}
+
+function abiDestroyChart(id) {
+  if (abiCharts[id]) { abiCharts[id].destroy(); delete abiCharts[id]; }
+}
+
+function abiSelectMonth(m) { abiSelectedMonth = m; updateAnalyticsBI(); }
+
+function updateAnalyticsBI() {
+  const content = document.getElementById('abiContent');
+  const empty = document.getElementById('abiEmpty');
+  if (!content) return;
+  if (!appData.months.length) { content.style.display = 'none'; empty.style.display = ''; return; }
+  content.style.display = ''; empty.style.display = 'none';
+
+  if (!abiSelectedMonth || !appData.months.includes(abiSelectedMonth)) {
+    abiSelectedMonth = appData.months[appData.months.length - 1];
+  }
+  document.getElementById('abiMonthChips').innerHTML = appData.months
+    .map(m => `<button class="abi-chip${m === abiSelectedMonth ? ' active' : ''}" onclick="abiSelectMonth('${m}')">${m}</button>`)
+    .join('');
+
+  const v = computeDREValues([abiSelectedMonth], 'ALL');
+  const variacao = computeVariacaoDRE([abiSelectedMonth], 'ALL');
+  abiRenderKPIs(v, variacao);
+  abiRenderWaterfall(v);
+  abiRenderInsights(v);
+  abiRenderDonuts(v);
+  abiRenderHeatmap();
+}
+
+// ---------- KPIs ----------
+function abiRenderKPIs(v, variacao) {
+  const defs = [
+    { code: '1.0', label: 'Faturamento Bruto', accent: '#1D4ED8', sub: 'vs média anterior' },
+    { code: '1.1', label: 'Vendas Líquidas', accent: '#3B82F6', sub: 'vs média anterior' },
+    { code: '15.0', label: 'Margem de Contribuição', accent: '#0EA5E9', subPctOf: '1.1' },
+    { code: '12.0', label: 'Lucro Líquido', accent: '#059669', subPctOf: '1.1' },
+    { code: '14.0', label: 'Resultado Final', accentDyn: true, sub: 'após despesas extras' },
+  ];
+  document.getElementById('abiKpiRow').innerHTML = defs.map(d => {
+    const val = v[d.code] || 0;
+    const accent = d.accentDyn ? (val >= 0 ? '#059669' : '#DC2626') : d.accent;
+    const varCell = variacao ? renderVariacaoCell(variacao[d.code], FAVORABLE_UP_CODES.includes(d.code)) : '<span style="color:#94a3b8">—</span>';
+    let sub = d.sub || '';
+    if (d.subPctOf) {
+      const base = v[d.subPctOf] || 0;
+      sub = base > 0 ? ((val / base) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '% das vendas' : '';
+    }
+    return `<div class="abi-kpi" style="border-top-color:${accent}">
+      <div class="abi-kpi-label">${d.label}</div>
+      <div class="abi-kpi-value">${abiFmtCompact(val)}</div>
+      <div class="abi-kpi-sub">${varCell}<span>${sub}</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ---------- Waterfall (Chart.js floating bars) ----------
+function abiRenderWaterfall(v) {
+  document.getElementById('abiWaterfallHint').textContent = 'cascata do mês · ' + abiSelectedMonth;
+  const pessoal = (v['5.0'] || 0) + (v['6.0'] || 0);
+  const operacionais = (v['7.0'] || 0) + (v['8.0'] || 0) + (v['9.0'] || 0);
+  const outras = v['11.0'] || 0;
+  const steps = [
+    { name: 'Faturamento Bruto', value: v['1.0'] || 0, type: 'total' },
+    { name: 'Descontos', value: -(v['2.0'] || 0), type: 'neg' },
+    { name: 'Vendas Líquidas', value: v['1.1'] || 0, type: 'total' },
+    { name: 'Impostos', value: -(v['3.0'] || 0), type: 'neg' },
+    { name: 'Mercadorias', value: -(v['4.0'] || 0), type: 'neg' },
+    { name: 'Pessoal', value: -pessoal, type: 'neg' },
+    { name: 'Operacionais', value: -operacionais, type: 'neg' },
+    { name: 'Financeiras', value: -(v['10.0'] || 0), type: 'neg' },
+  ];
+  if (outras > 0) steps.push({ name: 'Outras Receitas', value: outras, type: 'pos' });
+  steps.push({ name: 'Lucro Líquido', value: v['12.0'] || 0, type: 'total' });
+  steps.push({ name: 'Desp. Extras', value: -(v['13.0'] || 0), type: 'neg' });
+  steps.push({ name: 'Resultado Final', value: v['14.0'] || 0, type: 'result' });
+
+  let running = 0;
+  const bars = steps.map(s => {
+    if (s.type === 'total' || s.type === 'result') { running = s.value; return { ...s, range: [0, s.value] }; }
+    const start = running; running += s.value;
+    return { ...s, range: [start, running] };
+  });
+  const colorOf = s => s.type === 'total' ? '#1D4ED8'
+    : s.type === 'result' ? (s.value >= 0 ? '#059669' : '#DC2626')
+    : s.type === 'pos' ? '#6EE7B7' : '#FCA5A5';
+
+  abiDestroyChart('waterfall');
+  abiCharts['waterfall'] = new Chart(document.getElementById('abiWaterfall'), {
+    type: 'bar',
+    data: {
+      labels: bars.map(b => b.name),
+      datasets: [{ data: bars.map(b => b.range), backgroundColor: bars.map(colorOf), borderRadius: 4, borderSkipped: false }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => {
+          const s = bars[ctx.dataIndex];
+          const val = (s.type === 'neg') ? -Math.abs(s.value) : s.value;
+          return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
+        } } }
+      },
+      scales: {
+        x: { ticks: { font: { size: 10 }, maxRotation: 40, minRotation: 28 }, grid: { display: false } },
+        y: { ticks: { callback: v => abiFmtCompact(v), font: { size: 10 } }, grid: { color: '#EEF2F7' } }
+      }
+    }
+  });
+}
+
+// ---------- Donuts (sem CMV — o CMV acompanha o faturamento e esmagaria
+// visualmente as despesas onde existe real poder de gestão; ele permanece
+// no Waterfall, onde a proporção com a receita é o que importa) ----------
+function abiDonutData(v, keys) {
+  const map = {
+    pessoal: { name: 'Pessoal', value: (v['5.0'] || 0) + (v['6.0'] || 0) },
+    funcionamento: { name: 'Funcionamento', value: v['9.0'] || 0 },
+    impostos: { name: 'Impostos', value: v['3.0'] || 0 },
+    extras: { name: 'Desp. Extras', value: v['13.0'] || 0 },
+    assessorias: { name: 'Assessorias', value: v['7.0'] || 0 },
+    financeiras: { name: 'Financeiras', value: v['10.0'] || 0 },
+    administrativas: { name: 'Administrativas', value: v['8.0'] || 0 },
+  };
+  return keys.map(k => ({ ...map[k], color: ABI_DONUT_COLORS[k] }))
+    .filter(d => d.value > 0)
+    .sort((a, b) => b.value - a.value);
+}
+
+function abiRenderDonut(chartId, canvasId, centerId, legendId, data, centerLabel) {
+  const total = data.reduce((s, d) => s + d.value, 0);
+  document.getElementById(centerId).innerHTML = `<div class="lbl">${centerLabel}</div><div class="val">${abiFmtCompact(total)}</div>`;
+  document.getElementById(legendId).innerHTML = data.map(d =>
+    `<div class="abi-legend-item"><span class="sw" style="background:${d.color}"></span><span class="nm">${d.name}</span><span class="vl">${abiFmtCompact(d.value)}</span><span class="pc">${total > 0 ? ((d.value / total) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) : 0}%</span></div>`
+  ).join('');
+
+  abiDestroyChart(chartId);
+  abiCharts[chartId] = new Chart(document.getElementById(canvasId), {
+    type: 'doughnut',
+    data: { labels: data.map(d => d.name), datasets: [{ data: data.map(d => d.value), backgroundColor: data.map(d => d.color), borderWidth: 2, borderColor: '#fff', hoverOffset: 10 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '62%',
+      animation: { duration: 900, easing: 'easeInOutQuart' },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => {
+          const val = ctx.parsed;
+          const pct = total > 0 ? ((val / total) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) : 0;
+          return ' ' + new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val) + ' · ' + pct + '%';
+        } } }
+      }
+    }
+  });
+}
+
+function abiRenderDonuts(v) {
+  abiRenderDonut('donut1', 'abiDonut1', 'abiDonut1Center', 'abiLegend1',
+    abiDonutData(v, ['pessoal', 'funcionamento', 'impostos', 'extras', 'assessorias', 'financeiras', 'administrativas']),
+    'Total gerenciável');
+  abiRenderDonut('donut2', 'abiDonut2', 'abiDonut2Center', 'abiLegend2',
+    abiDonutData(v, ['funcionamento', 'assessorias', 'financeiras', 'administrativas']),
+    'Funcionamento e apoio');
+}
+
+// ---------- Heatmap: margem bruta (%) por unidade × mês ----------
+function abiHeatColor(v, min, max) {
+  const t = max === min ? 0.5 : (v - min) / (max - min);
+  const from = [219, 234, 254], to = [5, 150, 105];
+  return 'rgb(' + from.map((f, i) => Math.round(f + (to[i] - f) * t)).join(',') + ')';
+}
+
+function abiRenderHeatmap() {
+  const el = document.getElementById('abiHeatmap');
+  const units = [...new Set(Object.values(appData.processedData).map(i => i.unit))].sort();
+  if (!units.length) { el.innerHTML = '<p class="info-text">Sem dados por unidade.</p>'; return; }
+  const matrix = units.map(u => appData.months.map(m => {
+    const vendas = sumAccountForPeriod(u, [m], 'Vendas realizadas');
+    const cmv = sumAccountForPeriod(u, [m], 'C.M.V');
+    return vendas > 0 ? ((vendas - cmv) / vendas) * 100 : null;
+  }));
+  const vals = matrix.flat().filter(x => x !== null);
+  if (!vals.length) { el.innerHTML = '<p class="info-text">Sem dados de vendas/CMV por unidade para calcular margem.</p>'; return; }
+  const min = Math.min(...vals), max = Math.max(...vals);
+
+  let html = '<table class="abi-heat-table"><thead><tr><th style="text-align:left">Unidade</th>';
+  html += appData.months.map(m => `<th class="${m === abiSelectedMonth ? 'sel' : ''}">${m.slice(0, 3)}</th>`).join('');
+  html += '</tr></thead><tbody>';
+  units.forEach((u, ui) => {
+    const withAlias = Object.values(appData.processedData).find(i => i.unit === u && i.alias);
+    const label = withAlias ? withAlias.alias : u;
+    html += `<tr><td class="unit">${label}</td>`;
+    appData.months.forEach((m, mi) => {
+      const v = matrix[ui][mi];
+      if (v === null) { html += '<td class="cell" style="background:#f1f5f9;color:#94a3b8">—</td>'; return; }
+      const fg = v > (min + max) / 2 ? '#fff' : '#0f172a';
+      html += `<td class="cell${m === abiSelectedMonth ? ' sel' : ''}" title="${label} · ${m}: margem ${v.toFixed(1)}%" style="background:${abiHeatColor(v, min, max)};color:${fg}">${v.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}</td>`;
+    });
+    html += '</tr>';
+  });
+  el.innerHTML = html + '</tbody></table>';
+}
+
+// ---------- Insights (regras sobre os dados reais) ----------
+function abiRenderInsights(v) {
+  const out = [];
+  const variacao = computeVariacaoDRE([abiSelectedMonth], 'ALL');
+  const resultado = v['14.0'] || 0, lucro = v['12.0'] || 0, extras = v['13.0'] || 0;
+
+  if (resultado < 0) {
+    out.push({ tone: 'bad', title: `Resultado negativo em ${abiSelectedMonth}`,
+      text: `Despesas Extras somaram ${abiFmtCompact(extras)}${variacao && isFinite(variacao['13.0']) ? ` (${variacao['13.0'] >= 0 ? '+' : ''}${variacao['13.0'].toFixed(0)}% vs média anterior)` : ''}, revertendo o Lucro Líquido de ${abiFmtCompact(lucro)}.` });
+  } else {
+    out.push({ tone: 'good', title: `Resultado positivo em ${abiSelectedMonth}`,
+      text: `Resultado Final de ${abiFmtCompact(resultado)} após ${abiFmtCompact(extras)} em Despesas Extras.` });
+  }
+
+  if (variacao && isFinite(variacao['1.0'])) {
+    const varr = variacao['1.0'];
+    out.push({ tone: varr >= 0 ? 'good' : 'bad', title: `Faturamento ${varr >= 0 ? 'acima' : 'abaixo'} da média`,
+      text: `${abiFmtCompact(v['1.0'] || 0)} no mês (${varr >= 0 ? '+' : ''}${varr.toFixed(1)}% vs média dos meses anteriores).` });
+  }
+
+  const ger = [
+    ['Pessoal', (v['5.0'] || 0) + (v['6.0'] || 0)], ['Funcionamento', v['9.0'] || 0],
+    ['Impostos', v['3.0'] || 0], ['Desp. Extras', extras],
+    ['Assessorias', v['7.0'] || 0], ['Financeiras', v['10.0'] || 0],
+  ];
+  const totalGer = ger.reduce((s, g) => s + g[1], 0);
+  if (totalGer > 0) {
+    const top = [...ger].sort((a, b) => b[1] - a[1])[0];
+    out.push({ tone: 'info', title: `${top[0]} lidera as despesas gerenciáveis`,
+      text: `${((top[1] / totalGer) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}% do total gerenciável (${abiFmtCompact(top[1])}) — excluído o CMV, que acompanha o faturamento.` });
+  }
+
+  const vendas = v['1.1'] || 0, breakEven = v['17.0'] || 0;
+  if (breakEven > 0) {
+    const folga = vendas - breakEven;
+    out.push({ tone: folga >= 0 ? 'info' : 'bad', title: 'Ponto de equilíbrio',
+      text: `Break-even de ${abiFmtCompact(breakEven)}; vendas ${folga >= 0 ? 'superaram' : 'ficaram abaixo'} em ${abiFmtCompact(Math.abs(folga))}.` });
+  }
+
+  const TONES = { good: ['#059669', '#ECFDF5'], bad: ['#DC2626', '#FEF2F2'], info: ['#3B82F6', '#DBEAFE'] };
+  document.getElementById('abiInsights').innerHTML = out.slice(0, 5).map(i => {
+    const [dot, bg] = TONES[i.tone];
+    return `<div class="abi-insight" style="background:${bg}"><span class="dot" style="background:${dot}"></span><div><div class="tt">${i.title}</div><div class="tx">${i.text}</div></div></div>`;
+  }).join('');
+}
+
+// Mantém a aba Analytics BI sincronizada quando os dados mudam (importação,
+// Limpar Tudo, restauração de backup) SEM alterar nenhuma função existente:
+// composição por cima de updateAllReports — o original roda intacto e, se a
+// aba estiver aberta, o BI é re-renderizado em seguida.
+const abiPrevUpdateAllReports = updateAllReports;
+updateAllReports = function () {
+  abiPrevUpdateAllReports();
+  try {
+    const sec = document.getElementById('analyticsbi');
+    if (sec && sec.classList && typeof sec.classList.contains === 'function' && sec.classList.contains('active')) {
+      updateAnalyticsBI();
+    }
+  } catch (e) { /* nunca deixar o BI derrubar os relatórios principais */ }
+};
+</script>
+</body>
+</html>

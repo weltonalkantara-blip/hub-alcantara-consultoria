@@ -10,6 +10,16 @@
   --color-foreground: var(--foreground);
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Identidade visual — Alcântara Consultoria Farma 360 */
+  --color-navy-950: #060d1f;
+  --color-navy-900: #0b1a38;
+  --color-navy-800: #142a54;
+  --color-navy-700: #1d3a70;
+  --color-gold-600: #a8762f;
+  --color-gold-500: #c9a15a;
+  --color-gold-400: #d9b876;
+  --color-gold-300: #e8c98f;
 }
 
 @media (prefers-color-scheme: dark) {

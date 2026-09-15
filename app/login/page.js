@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   signInWithEmailAndPassword,
@@ -29,7 +30,8 @@ export default function LoginPage() {
         const cred = await createUserWithEmailAndPassword(auth, email, senha);
         // Cria o documento correspondente na coleção `usuarios`.
         // Todo novo cadastro entra como "cliente" por padrão; promova para
-        // "admin" ou "consultor" manualmente no Firestore quando necessário.
+        // "admin" ou "consultor" pelo menu Usuários (ou no Firestore) quando
+        // necessário.
         await setDoc(doc(db, "usuarios", cred.user.uid), {
           nome: nome || email,
           email,
@@ -46,12 +48,19 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="mb-1 text-lg font-semibold text-slate-800">
-          Hub Alcântara Consultoria Farma 360
-        </h1>
-        <p className="mb-6 text-sm text-slate-500">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800 px-4">
+      <div className="w-full max-w-sm rounded-xl border border-white/10 bg-navy-900/60 p-6 shadow-xl backdrop-blur">
+        <div className="mb-5 flex justify-center">
+          <Image
+            src="/logo-alcantara.png"
+            alt="Alcântara Consultoria Farma 360"
+            width={220}
+            height={67}
+            priority
+            className="h-14 w-auto"
+          />
+        </div>
+        <p className="mb-6 text-center text-sm text-white/60">
           {modo === "login" ? "Entre com sua conta" : "Crie sua conta"}
         </p>
 
@@ -62,7 +71,7 @@ export default function LoginPage() {
               placeholder="Nome"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+              className="w-full rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 outline-none focus:border-gold-500"
             />
           )}
           <input
@@ -71,7 +80,7 @@ export default function LoginPage() {
             placeholder="E-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+            className="w-full rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 outline-none focus:border-gold-500"
           />
           <input
             type="password"
@@ -80,15 +89,15 @@ export default function LoginPage() {
             placeholder="Senha"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+            className="w-full rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 outline-none focus:border-gold-500"
           />
 
-          {erro && <p className="text-sm text-red-600">{erro}</p>}
+          {erro && <p className="text-sm text-red-400">{erro}</p>}
 
           <button
             type="submit"
             disabled={carregando}
-            className="w-full rounded-md bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-60"
+            className="w-full rounded-md bg-gold-500 px-3 py-2 text-sm font-semibold text-navy-950 hover:bg-gold-400 disabled:opacity-60"
           >
             {carregando
               ? "Aguarde..."
@@ -100,7 +109,7 @@ export default function LoginPage() {
 
         <button
           onClick={() => setModo(modo === "login" ? "cadastro" : "login")}
-          className="mt-4 w-full text-center text-sm text-slate-500 hover:text-slate-700"
+          className="mt-4 w-full text-center text-sm text-white/50 hover:text-white/80"
         >
           {modo === "login"
             ? "Não tem conta? Cadastre-se"

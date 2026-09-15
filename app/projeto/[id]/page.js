@@ -102,12 +102,25 @@ export default function ProjetoPage() {
         ) : (
           <>
             <div className="mt-3 rounded-xl border border-slate-200 bg-white p-5">
-              <h1 className="text-xl font-semibold text-slate-800">
-                {projeto.nome}
-              </h1>
-              <p className="text-xs uppercase tracking-wide text-slate-400">
-                {projeto.categoria} • {projeto.status}
-              </p>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h1 className="text-xl font-semibold text-navy-900">
+                    {projeto.nome}
+                  </h1>
+                  <p className="text-xs uppercase tracking-wide text-slate-400">
+                    {projeto.categoria} • {projeto.status}
+                  </p>
+                </div>
+                {projeto.link_ferramenta && (
+                  <Link
+                    href={projeto.link_ferramenta}
+                    target={projeto.link_ferramenta.startsWith("/") ? undefined : "_blank"}
+                    className="rounded-md bg-gold-500 px-3 py-2 text-sm font-semibold text-navy-950 hover:bg-gold-400"
+                  >
+                    Abrir ferramenta →
+                  </Link>
+                )}
+              </div>
               <p className="mt-3 text-sm text-slate-600">{projeto.descricao}</p>
               <p className="mt-3 text-xs text-slate-400">
                 Início: {projeto.data_inicio || "—"} · Fim:{" "}

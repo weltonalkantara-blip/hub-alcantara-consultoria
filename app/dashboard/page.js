@@ -24,6 +24,7 @@ export default function DashboardPage() {
   const [carregandoProjetos, setCarregandoProjetos] = useState(true);
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [restrito, setRestrito] = useState(false);
 
   // Protege a rota: se não estiver logado, manda para /login.
   useEffect(() => {
@@ -48,6 +49,12 @@ export default function DashboardPage() {
   async function handleNovoProjeto(e) {
     e.preventDefault();
     const form = new FormData(e.target);
+    const emailsBrutos = form.get("usuarios_permitidos") || "";
+    const usuariosPermitidos = emailsBrutos
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+
     await addDoc(collection(db, "projetos"), {
       nome: form.get("nome"),
       categoria: form.get("categoria"),
@@ -55,10 +62,14 @@ export default function DashboardPage() {
       descricao: form.get("descricao"),
       data_inicio: form.get("data_inicio"),
       data_fim: form.get("data_fim") || null,
+      acesso: restrito ? "restrito" : "todos",
+      usuarios_permitidos: restrito ? usuariosPermitidos : [],
+      link_ferramenta: form.get("link_ferramenta")?.trim() || null,
       criado_em: serverTimestamp(),
       criado_por: user.email,
     });
     e.target.reset();
+    setRestrito(false);
     setMostrarForm(false);
   }
 
@@ -74,7 +85,7 @@ export default function DashboardPage() {
       <Navbar />
       <main className="mx-auto max-w-5xl px-4 py-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-xl font-semibold text-slate-800">Projetos</h1>
+          <h1 className="text-xl font-semibold text-navy-900">Projetos</h1>
           <div className="flex items-center gap-2">
             <select
               value={filtroStatus}
@@ -90,7 +101,7 @@ export default function DashboardPage() {
             </select>
             <button
               onClick={() => setMostrarForm(!mostrarForm)}
-              className="rounded-md bg-slate-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700"
+              className="rounded-md bg-navy-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-navy-800"
             >
               {mostrarForm ? "Cancelar" : "Novo projeto"}
             </button>
@@ -144,9 +155,35 @@ export default function DashboardPage() {
               className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
               rows={3}
             />
+
+            <input
+              name="link_ferramenta"
+              placeholder="Link da ferramenta (opcional) — ex.: /dre-alpha-pwa"
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
+            />
+
+            <label className="flex items-center gap-2 text-sm text-slate-600 sm:col-span-2">
+              <input
+                type="checkbox"
+                checked={restrito}
+                onChange={(e) => setRestrito(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300"
+              />
+              Restringir acesso a e-mails específicos
+            </label>
+
+            {restrito && (
+              <textarea
+                name="usuarios_permitidos"
+                placeholder="E-mails permitidos, separados por vírgula"
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
+                rows={2}
+              />
+            )}
+
             <button
               type="submit"
-              className="rounded-md bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700 sm:col-span-2"
+              className="rounded-md bg-navy-900 px-3 py-2 text-sm font-medium text-white hover:bg-navy-800 sm:col-span-2"
             >
               Salvar projeto
             </button>
@@ -163,11 +200,21 @@ export default function DashboardPage() {
               <Link
                 key={p.id}
                 href={`/projeto/${p.id}`}
-                className="rounded-xl border border-slate-200 bg-white p-4 hover:border-slate-400"
+                className="rounded-xl border border-slate-200 bg-white p-4 hover:border-navy-700"
               >
-                <div className="mb-2 flex items-center justify-between">
+                <div className="mb-2 flex items-center justify-between gap-2">
                   <h2 className="font-medium text-slate-800">{p.nome}</h2>
-                  <StatusBadge status={p.status} />
+                  <div className="flex items-center gap-1.5">
+                    {p.acesso === "restrito" && (
+                      <span
+                        title="Acesso restrito"
+                        className="rounded-full bg-navy-900/10 px-2 py-0.5 text-xs font-medium text-navy-800"
+                      >
+                        🔒 Restrito
+                      </span>
+                    )}
+                    <StatusBadge status={p.status} />
+                  </div>
                 </div>
                 <p className="mb-1 text-xs uppercase tracking-wide text-slate-400">
                   {p.categoria}
