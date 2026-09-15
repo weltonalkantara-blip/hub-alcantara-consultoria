@@ -21,6 +21,7 @@ import {
 import { db, storage } from "@/firebase";
 import { useAuth } from "@/lib/useAuth";
 import Navbar from "@/components/Navbar";
+import Checklist from "@/components/Checklist";
 
 export default function ProjetoPage() {
   const { id } = useParams();
@@ -91,7 +92,7 @@ export default function ProjetoPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
-      <main className="mx-auto max-w-3xl px-4 py-8">
+      <main className="mx-auto max-w-5xl px-4 py-8">
         <Link href="/dashboard" className="text-sm text-slate-500 hover:text-slate-700">
           ← Voltar para projetos
         </Link>
@@ -115,6 +116,13 @@ export default function ProjetoPage() {
             </div>
 
             <section className="mt-6">
+              <h2 className="mb-3 text-sm font-semibold text-slate-800">
+                Checklist
+              </h2>
+              <Checklist projetoId={id} />
+            </section>
+
+            <section className="mt-8">
               <h2 className="mb-3 text-sm font-semibold text-slate-800">
                 Anexos
               </h2>
