@@ -77,7 +77,7 @@ export default function UsuariosPage() {
 
   if (perfilLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-[var(--bg-page)]">
         <Navbar />
         <main className="mx-auto max-w-3xl px-4 py-8">
           <p className="text-sm text-slate-500">Carregando...</p>
@@ -88,10 +88,10 @@ export default function UsuariosPage() {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-[var(--bg-page)]">
         <Navbar />
         <main className="mx-auto max-w-3xl px-4 py-8">
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-5">
             <h1 className="text-lg font-semibold text-navy-900">
               Acesso restrito
             </h1>
@@ -105,16 +105,16 @@ export default function UsuariosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[var(--bg-page)]">
       <Navbar />
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="mb-6 text-xl font-semibold text-navy-900">
+        <h1 className="mb-6 font-serif text-xl font-semibold text-navy-900">
           Cadastro de usuários
         </h1>
 
         <form
           onSubmit={handleCriarUsuario}
-          className="mb-8 grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-2"
+          className="mb-8 grid grid-cols-1 gap-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-4 sm:grid-cols-2"
         >
           <input
             required
@@ -178,7 +178,7 @@ export default function UsuariosPage() {
         ) : usuarios.length === 0 ? (
           <p className="text-sm text-slate-500">Nenhum usuário encontrado.</p>
         ) : (
-          <ul className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+          <ul className="divide-y divide-[var(--border-color)] rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)]">
             {usuarios.map((u) => (
               <li
                 key={u.id}

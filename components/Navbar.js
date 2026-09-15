@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { auth } from "@/firebase";
 import { useAuth } from "@/lib/useAuth";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Navbar() {
   const { user, isAdmin } = useAuth();
@@ -52,8 +53,9 @@ export default function Navbar() {
         )}
 
         {user && (
-          <div className="flex items-center gap-3 text-sm text-white/70">
-            <span className="hidden sm:inline">{user.email}</span>
+          <div className="flex items-center gap-2 text-sm text-white/70 sm:gap-3">
+            <ThemeToggle />
+            <span className="hidden md:inline">{user.email}</span>
             <button
               onClick={handleLogout}
               className="rounded-md border border-gold-500/60 px-3 py-1.5 text-gold-300 hover:bg-gold-500/10"

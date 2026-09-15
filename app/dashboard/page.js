@@ -14,6 +14,7 @@ import {
 import { db } from "@/firebase";
 import { useAuth } from "@/lib/useAuth";
 import Navbar from "@/components/Navbar";
+import AnimatedNumber from "@/components/AnimatedNumber";
 
 const STATUS = ["pendente", "em andamento", "concluído"];
 
@@ -78,40 +79,70 @@ export default function DashboardPage() {
       ? projetos
       : projetos.filter((p) => p.status === filtroStatus);
 
+  const resumo = [
+    { chave: "todos", label: "Total", valor: projetos.length },
+    ...STATUS.map((s) => ({
+      chave: s,
+      label: s.charAt(0).toUpperCase() + s.slice(1),
+      valor: projetos.filter((p) => p.status === s).length,
+    })),
+  ];
+
   if (loading || !user) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[var(--bg-page)]">
       <Navbar />
       <main className="mx-auto max-w-5xl px-4 py-8">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-xl font-semibold text-navy-900">Projetos</h1>
-          <div className="flex items-center gap-2">
-            <select
-              value={filtroStatus}
-              onChange={(e) => setFiltroStatus(e.target.value)}
-              className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-            >
-              <option value="todos">Todos os status</option>
-              {STATUS.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={() => setMostrarForm(!mostrarForm)}
-              className="rounded-md bg-navy-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-navy-800"
-            >
-              {mostrarForm ? "Cancelar" : "Novo projeto"}
-            </button>
-          </div>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h1 className="font-serif text-2xl font-semibold text-navy-900">
+            Projetos
+          </h1>
+          <button
+            onClick={() => setMostrarForm(!mostrarForm)}
+            className="rounded-md bg-navy-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-navy-800"
+          >
+            {mostrarForm ? "Cancelar" : "Novo projeto"}
+          </button>
+        </div>
+
+        <div
+          role="tablist"
+          aria-label="Filtrar por status"
+          className="mb-6 grid grid-cols-2 gap-2 rounded-xl border border-[var(--kpi-strip-border)] bg-[var(--kpi-strip-bg)] p-3 sm:grid-cols-4 sm:gap-3"
+        >
+          {resumo.map((r) => {
+            const ativo = filtroStatus === r.chave;
+            return (
+              <button
+                key={r.chave}
+                type="button"
+                role="tab"
+                aria-selected={ativo}
+                onClick={() => setFiltroStatus(r.chave)}
+                style={{
+                  backgroundColor: ativo ? "var(--kpi-active-bg)" : undefined,
+                }}
+                className={`rounded-lg px-3 py-2.5 text-left transition-colors ${
+                  ativo ? "ring-1 ring-[var(--kpi-ring-color)]" : "hover:bg-[var(--kpi-hover-bg)]"
+                }`}
+              >
+                <p className="text-[0.68rem] uppercase tracking-wide text-[var(--kpi-label-color)]">
+                  {r.label}
+                </p>
+                <AnimatedNumber
+                  value={r.valor}
+                  className="font-serif text-2xl font-semibold text-[var(--kpi-value-color)] tabular-nums"
+                />
+              </button>
+            );
+          })}
         </div>
 
         {mostrarForm && (
           <form
             onSubmit={handleNovoProjeto}
-            className="mb-6 grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-2"
+            className="mb-6 grid grid-cols-1 gap-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-4 sm:grid-cols-2"
           >
             <input
               name="nome"
@@ -200,7 +231,7 @@ export default function DashboardPage() {
               <Link
                 key={p.id}
                 href={`/projeto/${p.id}`}
-                className="rounded-xl border border-slate-200 bg-white p-4 hover:border-navy-700"
+                className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-4 hover:border-navy-700"
               >
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <h2 className="font-medium text-slate-800">{p.nome}</h2>

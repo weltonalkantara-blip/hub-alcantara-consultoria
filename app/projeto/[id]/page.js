@@ -90,7 +90,7 @@ export default function ProjetoPage() {
   if (loading || !user) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[var(--bg-page)]">
       <Navbar />
       <main className="mx-auto max-w-5xl px-4 py-8">
         <Link href="/dashboard" className="text-sm text-slate-500 hover:text-slate-700">
@@ -101,10 +101,10 @@ export default function ProjetoPage() {
           <p className="mt-4 text-sm text-slate-500">Carregando...</p>
         ) : (
           <>
-            <div className="mt-3 rounded-xl border border-slate-200 bg-white p-5">
+            <div className="mt-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h1 className="text-xl font-semibold text-navy-900">
+                  <h1 className="font-serif text-xl font-semibold text-navy-900">
                     {projeto.nome}
                   </h1>
                   <p className="text-xs uppercase tracking-wide text-slate-400">
@@ -162,7 +162,7 @@ export default function ProjetoPage() {
                   Nenhum anexo enviado ainda.
                 </p>
               ) : (
-                <ul className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+                <ul className="divide-y divide-[var(--border-color)] rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)]">
                   {anexos.map((a) => (
                     <li
                       key={a.id}

@@ -10,6 +10,7 @@
   --color-foreground: var(--foreground);
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-serif: "Fraunces", ui-serif, Georgia, serif;
 
   /* Identidade visual — Alcântara Consultoria Farma 360 */
   --color-navy-950: #060d1f;
@@ -20,6 +21,39 @@
   --color-gold-500: #c9a15a;
   --color-gold-400: #d9b876;
   --color-gold-300: #e8c98f;
+}
+
+/* Temas — "Confiança Executiva" (padrão) e "Corporativo Claro".
+   Tokens semânticos usados nas páginas internas do Hub; a Navbar e a tela
+   de login permanecem sempre navy (a logo tem fundo navy sólido). Alternado
+   via atributo data-theme na <html>, persistido no navegador (localStorage). */
+:root,
+:root[data-theme="executiva"] {
+  --bg-page: #f8fafc;
+  --bg-surface: #ffffff;
+  --border-color: #e2e8f0;
+
+  --kpi-strip-bg: var(--color-navy-900);
+  --kpi-strip-border: var(--color-navy-950);
+  --kpi-label-color: rgba(255, 255, 255, 0.55);
+  --kpi-value-color: var(--color-gold-300);
+  --kpi-active-bg: rgba(255, 255, 255, 0.1);
+  --kpi-hover-bg: rgba(255, 255, 255, 0.05);
+  --kpi-ring-color: var(--color-gold-500);
+}
+
+:root[data-theme="claro"] {
+  --bg-page: #faf7f0;
+  --bg-surface: #ffffff;
+  --border-color: #e6ddc9;
+
+  --kpi-strip-bg: #ffffff;
+  --kpi-strip-border: #e6ddc9;
+  --kpi-label-color: #64748b;
+  --kpi-value-color: var(--color-navy-800);
+  --kpi-active-bg: rgba(11, 26, 56, 0.06);
+  --kpi-hover-bg: rgba(11, 26, 56, 0.03);
+  --kpi-ring-color: var(--color-gold-600);
 }
 
 @media (prefers-color-scheme: dark) {

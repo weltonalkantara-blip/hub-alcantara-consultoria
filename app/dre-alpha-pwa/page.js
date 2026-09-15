@@ -51,10 +51,10 @@ export default function DreAlphaPwaPage() {
 
   if (!permitido) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-[var(--bg-page)]">
         <Navbar />
         <main className="mx-auto max-w-3xl px-4 py-8">
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-5">
             <h1 className="text-lg font-semibold text-navy-900">
               Acesso restrito
             </h1>
@@ -76,7 +76,7 @@ export default function DreAlphaPwaPage() {
 
   return (
     <div className="flex h-screen flex-col">
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2">
+      <div className="flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-surface)] px-4 py-2">
         <Link
           href="/dashboard"
           className="text-sm text-slate-500 hover:text-navy-800"
